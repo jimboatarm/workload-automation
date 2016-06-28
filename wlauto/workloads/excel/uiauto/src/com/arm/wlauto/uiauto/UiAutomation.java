@@ -258,6 +258,17 @@ public class UiAutomation extends UxPerfUiAutomation {
                                          .childSelector(new UiSelector().index(0)
                                          .childSelector(new UiSelector().index(2)
                                          .childSelector(new UiSelector().index(2))))))));
+
+        if (!cellBox.exists()) {
+            return new UiObject(new UiSelector().resourceId("com.microsoft.office.excel:id/mainCanvas")
+                                         .childSelector(new UiSelector().index(0)
+                                         .childSelector(new UiSelector().index(0)
+                                         .childSelector(new UiSelector().index(0)
+                                         .childSelector(new UiSelector().index(0)
+                                         .childSelector(new UiSelector().index(2)
+                                         .childSelector(new UiSelector().index(2))))))));
+        }
+
         return cellBox;
     }
 
