@@ -46,6 +46,7 @@ public class UiAutomation extends UxPerfUiAutomation {
     public static final int SCROLL_SWIPE_STEPS = 50;
     public static final String CLASS_BUTTON = "android.widget.Button";
     public static final String CLASS_EDIT_TEXT = "android.widget.EditText";
+    public static final String CLASS_TEXT_VIEW = "android.widget.TextView";
     public static final String CLASS_TOGGLE_BUTTON = "android.widget.ToggleButton";
 
     protected LinkedHashMap<String, Timer> results = new LinkedHashMap<String, Timer>();
@@ -56,8 +57,7 @@ public class UiAutomation extends UxPerfUiAutomation {
     protected String outputDir;
     protected String packageName;
     protected String packageID;
-    protected String loginEmail;
-    protected String loginPass;
+    protected String testFile;
 
     public void runUiAutomation() throws Exception {
         parameters = getParams();
@@ -65,8 +65,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         packageName = parameters.getString("package");
         outputDir = parameters.getString("output_dir");
         packageID = packageName + ":id/";
-        loginEmail = parameters.getString("login_email", "");
-        loginPass = parameters.getString("login_pass", "");
+        testFile = parameters.getString("test_file", "");
         setScreenOrientation(ScreenOrientation.NATURAL);
 
         // Welcome screen handling
@@ -77,10 +76,11 @@ public class UiAutomation extends UxPerfUiAutomation {
         clickUiObject(BY_TEXT, "Skip", true); // skip welcome screen
         stopLogger("welcome_screen_skip");
         // Run the main tests
-        if (Boolean.parseBoolean(parameters.getString("use_test_file"))) {
-            testExistingDocument(parameters.getString("test_file"));
-        }
         testCreateDocument("UX-Perf-Word");
+        if (Boolean.parseBoolean(parameters.getString("use_test_file"))) {
+            testExistingDocument(testFile);
+        }
+        deleteDocuments();
 
         unsetScreenOrientation();
         writeResultsToFile(results, parameters.getString("output_file"));
@@ -157,7 +157,6 @@ public class UiAutomation extends UxPerfUiAutomation {
         startLogger("new_doc_close_file");
         clickUiObject(BY_TEXT, "Close", CLASS_BUTTON, true);
         stopLogger("new_doc_close_file");
-        deleteDocuments();
     }
 
     public void testExistingDocument(String documentName) throws Exception {
@@ -215,14 +214,21 @@ public class UiAutomation extends UxPerfUiAutomation {
         clickUiObject(BY_TEXT, "Pictures", CLASS_TOGGLE_BUTTON);
         clickUiObject(BY_TEXT, "Photos", CLASS_BUTTON, true);
         stopLogger("insert_image_menu");
-        startLogger("insert_image_action");
-        clickUiObject(BY_TEXT, "Recent");
-        try {
-            UiObject image = new UiObject(new UiSelector().resourceId("com.android.documentsui:id/date").instance(2));
-            image.clickAndWaitForNewWindow();
-        } catch (UiObjectNotFoundException e) {
-            clickUiObject(BY_ID, "com.android.documentsui:id/date", true);
+
+        UiObject imagesDrawer = new UiObject(new UiSelector().descriptionContains("Show roots"));
+        UiObject imagesFolder = new UiObject(new UiSelector().className(CLASS_TEXT_VIEW).textContains("Images"));
+        startLogger("insert_image_navigation");
+        if (!imagesFolder.exists()) {
+            imagesDrawer.click();
         }
+        imagesFolder.click();
+        UiScrollable grid = new UiScrollable(new UiSelector().resourceId("com.android.documentsui:id/grid"));
+        grid.scrollIntoView(new UiSelector().textContains("wa-working").className(CLASS_TEXT_VIEW));
+        clickUiObject(BY_TEXT, "wa-working", CLASS_TEXT_VIEW, true);
+        stopLogger("insert_image_navigation");
+        // Select the first image
+        startLogger("insert_image_action");
+        clickUiObject(BY_ID, "com.android.documentsui:id/date", true);
         stopLogger("insert_image_action");
 
         // Edit image
@@ -252,9 +258,15 @@ public class UiAutomation extends UxPerfUiAutomation {
         startLogger("open_doc_navigate");
         clickUiObject(BY_TEXT, "Open", true);
         clickUiObject(BY_TEXT, "This device");
-        clickUiObject(BY_TEXT, "Documents");
+        UiObject storage =
+            new UiObject(new UiSelector().resourceId(packageID + "list_entry_title").textContains("Storage"));
+        storage.click();
+        UiScrollable list = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+        list.scrollIntoView(new UiSelector().textContains("wa-working"));
+        clickUiObject(BY_TEXT, "wa-working");
         stopLogger("open_doc_navigate");
         startLogger("open_doc_action");
+        list.scrollIntoView(new UiSelector().textContains(documentName));
         clickUiObject(BY_TEXT, documentName, true);
         stopLogger("open_doc_action");
     }
