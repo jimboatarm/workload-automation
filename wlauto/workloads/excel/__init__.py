@@ -28,6 +28,8 @@ class Excel(AndroidUiAutoBenchmark):
     name = 'excel'
     package = 'com.microsoft.office.excel'
     activity = 'com.microsoft.office.apphost.LaunchActivity'
+    view = [package + '/com.microsoft.office.apphost.LaunchActivity',
+            package + '/.excelMainActivity']
     description = """
     A workload to perform standard productivity tasks with Microsoft Excel.
     This workload is split into two tests:
