@@ -13,10 +13,10 @@
 # limitations under the License.
 #
 
+import glob
 import os
-import logging
 import re
-import time
+import shutil
 
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import WorkloadError
@@ -74,11 +74,6 @@ class MsWord(AndroidUiAutoBenchmark):
         super(MsWord, self).__init__(device, **kwargs)
         self.run_timeout = 300
         self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
-        self.local_dir = self.dependencies_directory
-        # Use Android documents folder as it is one of the default folders that appear in
-        # Word's file picker, and not WA's working directory. Improves test reliability by
-        # not having to navigate around the filesystem to locate pushed file.
-        self.device_dir = os.path.join(self.device.working_directory, '..', 'Documents')
 
     def validate(self):
         super(MsWord, self).validate()
@@ -95,12 +90,24 @@ class MsWord(AndroidUiAutoBenchmark):
 
     def setup(self, context):
         super(MsWord, self).setup(context)
+        # If necessary, copy dependencies to the WA dependencies folder
+        current_dir = os.path.dirname(__file__)
+        deps_dir = self.dependencies_directory
+        if not os.path.isfile(os.path.join(deps_dir, self.test_file)):
+            filepath = os.path.join(current_dir, self.test_file)
+            shutil.copy(filepath, deps_dir)
+        if not glob.glob(os.path.join(deps_dir, '*.jpg')):
+            for entry in glob.glob(os.path.join(current_dir, '*.jpg')):
+                shutil.copy(entry, deps_dir)
+
         # push existing document
-        for entry in os.listdir(self.local_dir):
-            if entry == self.test_file:
-                self.device.push_file(os.path.join(self.local_dir, self.test_file),
-                                      os.path.join(self.device_dir, self.test_file),
+        for entry in os.listdir(deps_dir):
+            if entry == self.test_file or entry.endswith('.jpg'):
+                self.device.push_file(os.path.join(deps_dir, entry),
+                                      os.path.join(self.device.working_directory, entry),
                                       timeout=60)
+        # Force a re-index of the mediaserver cache to pick up new files
+        self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
     def update_result(self, context):
         super(MsWord, self).update_result(context)
@@ -124,12 +131,13 @@ class MsWord(AndroidUiAutoBenchmark):
         super(MsWord, self).teardown(context)
         regex = re.compile(r'Document( \([0-9]+\))?\.docx')
         # delete pushed or created documents
-        for entry in self.device.listdir(self.device_dir):
-            if entry == self.test_file or regex.search(entry):
-                self.device.delete_file(os.path.join(self.device_dir, entry))
+        for entry in self.device.listdir(self.device.working_directory):
+            if entry == self.test_file or entry.endswith('.jpg') or regex.search(entry):
+                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+        # Force a re-index of the mediaserver cache to removed cached files
+        self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
         # pull logs
         for entry in self.device.listdir(self.device.working_directory):
-            if entry.endswith(".log"):
-                self.logger.debug("Pulling file '{}'".format(entry))
+            if entry.endswith('.log'):
                 self.device.pull_file(os.path.join(self.device.working_directory, entry), context.output_directory)
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
