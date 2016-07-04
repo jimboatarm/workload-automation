@@ -316,7 +316,7 @@ public class UiAutomation extends UxPerfUiAutomation {
 
             // The text field 'Images' isn't reliable on tablet devices so
             // navigate to test folder directly instead
-            if (!internalStorage.exists()) {
+            if (!internalStorage.waitForExists(viewTimeout)) {
                 UiObject toolBarOptions =
                     new UiObject(new UiSelector().resourceId("com.android.documentsui:id/toolbar")
                                                  .childSelector(new UiSelector().index(2)
