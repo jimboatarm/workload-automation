@@ -267,18 +267,21 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         UiScrollable imagesList;
         if (isTablet()) {
-            // Switch to grid view if necessary
-            UiObject viewGrid = new UiObject(new UiSelector().descriptionContains("Grid view"));
-            if (viewGrid.exists()) {
-                viewGrid.click();
-            }
+            // Sometimes the file-list entry for 'internal storage' takes a while to appear or
+            // is hidden by a menu option. Toggle the menu option to show it if necessary,
+            // otherwise wait for a short while before attempting a click.
             UiObject internalStorage = new UiObject(new UiSelector().textContains("Internal storage"));
-            if (!internalStorage.waitForExists(WAIT_TIMEOUT_1SEC)) {
+            if (!internalStorage.waitForExists(WAIT_TIMEOUT_1SEC * 10)) {
                 clickUiObject(BY_DESC, "More options");
                 clickUiObject(BY_TEXT, "Show SD card");
             }
             internalStorage.click();
-            imagesList = new UiScrollable(new UiSelector().resourceId("com.android.documentsui:id/list"));
+            // Switch to grid view if necessary
+            UiObject viewGrid = new UiObject(new UiSelector().descriptionContains("Grid view"));
+            if (viewGrid.waitForExists(WAIT_TIMEOUT_1SEC)) {
+                viewGrid.click();
+            }
+            imagesList = new UiScrollable(new UiSelector().resourceId("com.android.documentsui:id/grid"));
         } else {
             // phones
             UiObject imagesFolder = new UiObject(new UiSelector().className(CLASS_TEXT_VIEW).textContains("Images"));
