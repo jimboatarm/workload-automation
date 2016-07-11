@@ -319,8 +319,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             if (!internalStorage.waitForExists(viewTimeout)) {
                 UiObject toolBarOptions =
                     new UiObject(new UiSelector().resourceId("com.android.documentsui:id/toolbar")
-                                                 .childSelector(new UiSelector().index(2)
-                                                 .childSelector(new UiSelector().index(1))));
+                                                 .childSelector(new UiSelector().description("More options")));
                 toolBarOptions.click();
 
                 UiObject showSDCard = new UiObject(new UiSelector().text("Show SD card"));
