@@ -273,7 +273,14 @@ public class UiAutomation extends UxPerfUiAutomation {
             UiObject internalStorage = new UiObject(new UiSelector().textContains("Internal storage"));
             if (!internalStorage.waitForExists(WAIT_TIMEOUT_1SEC * 10)) {
                 clickUiObject(BY_DESC, "More options");
-                clickUiObject(BY_TEXT, "Show SD card");
+                UiObject showStorage = new UiObject(new UiSelector().textContains("Show SD card"));
+                if (showStorage.exists()) {
+                    showStorage.click();
+                } else {
+                    // On some devices, the menu option mentions "internal storage" and not "SD card"
+                    showStorage = new UiObject(new UiSelector().textContains("Show internal storage"));
+                    showStorage.click();
+                }
             }
             internalStorage.click();
             // Switch to grid view if necessary
