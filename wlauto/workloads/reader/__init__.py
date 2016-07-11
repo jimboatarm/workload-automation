@@ -55,8 +55,8 @@ class Reader(AndroidUiAutoBenchmark):
     3. Repeat the open file step 1.
     4. Search test - a test measuring the time taken to search a large 100+ page mixed content
        document for specific strings.
-        1. Search document_name for first_search_word
-        2. Search document_name for second_search_word
+        1. Search document_name for first_search_string
+        2. Search document_name for second_search_string
     """
 
     parameters = [
@@ -74,20 +74,20 @@ class Reader(AndroidUiAutoBenchmark):
                   description="""
                   Password for Adobe online services.
                   """),
-        Parameter('document_name', kind=str, default="Getting_Started.pdf",
+        Parameter('document_name', kind=str, default="uxperf_test_doc.pdf",
                   description="""
                   The document name to use for the Gesture and Search test.
                   Note: spaces must be replaced with underscores in the document name.
                   """),
-        Parameter('first_search_word', kind=str, default="read",
+        Parameter('first_search_string', kind=str, default="The_quick_brown_fox_jumps_over_the_lazy_dog",
                   description="""
                   The first test string to use for the word search test.
                   Note: Accepts single words only.
                   """),
-        Parameter('second_search_word', kind=str, default="the",
+        Parameter('second_search_string', kind=str, default="TEST_SEARCH_STRING",
                   description="""
                   The second test string to use for the word search test.
-                  Note: Accepts single words only.
+                  Note: This must be a single word - spaces will be replaced with underscores
                   """),
     ]
 
@@ -102,9 +102,9 @@ class Reader(AndroidUiAutoBenchmark):
         self.uiauto_params['email'] = self.email
         self.uiauto_params['password'] = self.password
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
-        self.uiauto_params['filename'] = self.document_name
-        self.uiauto_params['first_search_word'] = self.first_search_word
-        self.uiauto_params['second_search_word'] = self.second_search_word
+        self.uiauto_params['filename'] = self.document_name.replace(' ', '_')
+        self.uiauto_params['first_search_string'] = self.first_search_string.replace(' ', '_')
+        self.uiauto_params['second_search_string'] = self.second_search_string.replace(' ', '_')
 
     def initialize(self, context):
         super(Reader, self).initialize(context)
@@ -114,6 +114,9 @@ class Reader(AndroidUiAutoBenchmark):
 
         self.reader_local_dir = self.device.path.join(self.device.external_storage_directory,
                                                       'Android/data/com.adobe.reader/files/')
+
+    def setup(self, context):
+        super(Reader, self).setup(context)
 
         # Check for workload dependencies before proceeding
         pdf_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.endswith(".pdf")]
@@ -151,9 +154,6 @@ class Reader(AndroidUiAutoBenchmark):
             if entry.endswith(".log"):
                 self.device.pull_file(os.path.join(self.device.working_directory, entry), context.output_directory)
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
-
-    def finalize(self, context):
-        super(Reader, self).finalize(context)
 
         for entry in self.device.listdir(self.reader_local_dir):
             if entry.endswith(".pdf"):

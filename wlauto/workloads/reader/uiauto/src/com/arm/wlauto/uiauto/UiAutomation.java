@@ -43,9 +43,9 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     public void runUiAutomation() throws Exception {
         parameters = getParams();
-        String filename = parameters.getString("filename").replace("_", " ");
-        String[] searchStrings = {parameters.getString("first_search_word"),
-                                  parameters.getString("second_search_word")};
+        String filename = parameters.getString("filename");
+        String[] searchStrings = {parameters.getString("first_search_string").replaceAll("_", " "),
+                                  parameters.getString("second_search_string")};
 
         setScreenOrientation(ScreenOrientation.NATURAL);
 
@@ -94,9 +94,6 @@ public class UiAutomation extends UxPerfUiAutomation {
     private void openFile(final String filename) throws Exception {
 
         String testTag = "openfile";
-
-        // Replace whitespace and full stops within the filename
-        String file = filename.replaceAll("\\.", "_").replaceAll("\\s+", "_");
 
         timingResults.put(String.format(testTag + "_local_files"), selectLocalFilesList());
 
@@ -236,7 +233,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject pageView = getUiObjectByResourceId("com.adobe.reader:id/pageView",
                                                     "android.widget.RelativeLayout");
         for (int i = 0; i < searchStrings.length; i++) {
-            String runName = (i == 0) ? "first_word" : "second_word";
+            String runName = (i == 0) ? "first_string" : "second_string";
             timingResults.put(String.format(testTag + "_" + runName), searchTest(searchStrings[i]));
         }
 
