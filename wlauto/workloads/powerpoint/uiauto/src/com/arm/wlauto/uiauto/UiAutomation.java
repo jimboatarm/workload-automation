@@ -70,7 +70,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         // Load presentation from file
         // ----------------------------------------------------------------
         if (Boolean.parseBoolean(parameters.getString("use_test_file"))) {
-            openPresentation();
+            String testFile = parameters.getString("test_file");
+            openPresentation(testFile);
             dismissToolTip();
             setTransitionEffect(transitionEffect);
             presentSlides(numberOfSlides, transitionEffect);
@@ -131,7 +132,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         folderName.click();
     }
 
-    private void openPresentation() throws Exception {
+    private void openPresentation(final String filename) throws Exception {
 
         String testTag = "open_presentation";
         SurfaceLogger logger = new SurfaceLogger(testTag, parameters);
@@ -141,7 +142,7 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         navigateToTestFolder();
 
-        UiObject fileEntry = getUiObjectByText(".pptx", "android.widget.TextView");
+        UiObject fileEntry = getUiObjectByText(filename, "android.widget.TextView");
 
         logger.start();
         fileEntry.click();
