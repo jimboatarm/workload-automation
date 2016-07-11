@@ -192,14 +192,14 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     public void checkVideoInfo() throws Exception {
+        UiObject expandButton = new UiObject(new UiSelector().resourceId(packageID + "expand_button"));
+        if (!expandButton.waitForExists(WAIT_TIMEOUT_1MS)) {
+            return;
+        }
         // Expand video info
-        startTimer();
-        clickUiObject(BY_ID, packageID + "expand_button");
-        endTimer("info_card_expand");
+        expandButton.click();
         SystemClock.sleep(500); // short delay to simulate user action
-        startTimer();
-        clickUiObject(BY_ID, packageID + "expand_button");
-        endTimer("info_card_collapse");
+        expandButton.click();
     }
 
     public void scrollRelated() throws Exception {
