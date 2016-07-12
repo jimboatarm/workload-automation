@@ -222,10 +222,21 @@ public class UiAutomation extends UxPerfUiAutomation {
                     .childSelector(new UiSelector().index(index)
                     .focusable(true)))));
 
+        // On large screen devices HorizontalScrollView is not used
+        UiObject slideThumbnailLarge =
+            new UiObject(new UiSelector()
+                    .resourceId("com.microsoft.office.powerpoint:id/thumbnailList")
+                    .childSelector(new UiSelector().className("android.widget.ScrollView")
+                    .childSelector(new UiSelector().className("android.view.View")
+                    .childSelector(new UiSelector().index(index)
+                    .focusable(true)))));
+
         if (slideThumbnailPhone.exists()) {
             slideThumbnailPhone.click();
-        } else {
+        } else if (slideThumbnailTablet.exists()) {
             slideThumbnailTablet.click();
+        } else {
+            slideThumbnailLarge.click();
         }
     }
 
