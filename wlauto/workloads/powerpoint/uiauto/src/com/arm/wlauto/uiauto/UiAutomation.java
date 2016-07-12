@@ -227,7 +227,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             new UiObject(new UiSelector()
                     .resourceId("com.microsoft.office.powerpoint:id/thumbnailList")
                     .childSelector(new UiSelector().className("android.widget.ScrollView")
-                    .childSelector(new UiSelector().className("android.view.View")
+                    .childSelector(new UiSelector().className("android.view.ViewGroup")
                     .childSelector(new UiSelector().index(index)
                     .focusable(true)))));
 
