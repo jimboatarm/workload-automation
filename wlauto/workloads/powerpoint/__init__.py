@@ -89,6 +89,11 @@ class Powerpoint(AndroidUiAutoBenchmark):
                   If ``True``, pushes a preconfigured test file to the device
                   used for measuring performance metrics.
                   """),
+        Parameter('test_file', kind=str, mandatory=False, default='uxperf_test_doc.pptx',
+                  description="""
+                  Filename to push to the device for testing
+                  Note: spaces must be replaced with underscores in the test_file name.
+                  """),
         Parameter('transition_effect', kind=str, mandatory=False, default='None',
                   description="""
                   The transition animation to use when moving between slides.
@@ -116,6 +121,7 @@ class Powerpoint(AndroidUiAutoBenchmark):
         self.uiauto_params['slide_template'] = self.slide_template
         self.uiauto_params['title_name'] = self.title_name
         self.uiauto_params['use_test_file'] = self.use_test_file
+        self.uiauto_params['test_file'] = self.test_file
         self.uiauto_params['transition_effect'] = self.transition_effect
         self.uiauto_params['number_of_slides'] = self.number_of_slides
 
