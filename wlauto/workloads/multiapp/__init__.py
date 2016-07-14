@@ -110,6 +110,7 @@ class Multiapp(AndroidUiAutoBenchmark):
     def __init__(self, device, **kwargs):
         super(Multiapp, self).__init__(device, **kwargs)
         self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.version = None
 
     def validate(self):
         super(Multiapp, self).validate()

@@ -19,6 +19,7 @@ import re
 import time
 
 from wlauto import AndroidUiAutoBenchmark, Parameter
+from wlauto.exceptions import WorkloadError
 
 
 class Youtube(AndroidUiAutoBenchmark):

@@ -30,8 +30,8 @@ class Gmail(AndroidUiAutoBenchmark):
     name = 'gmail'
     package = 'com.google.android.gm'
     activity = ''
-    view = [package+'/com.google.android.gm.ConversationListActivityGmail',
-            package+'/com.google.android.gm.ComposeActivityGmail']
+    view = [package + '/com.google.android.gm.ConversationListActivityGmail',
+            package + '/com.google.android.gm.ComposeActivityGmail']
     description = """
     A workload to perform standard productivity tasks within Gmail.  The workload carries out
     various tasks, such as creating new emails and sending them, whilst also producing metrics for
@@ -69,10 +69,10 @@ class Gmail(AndroidUiAutoBenchmark):
     def __init__(self, device, **kwargs):
         super(Gmail, self).__init__(device, **kwargs)
         self.uiauto_params['recipient'] = self.recipient
+        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
 
     def validate(self):
         super(Gmail, self).validate()
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
         self.uiauto_params['package'] = self.package
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file

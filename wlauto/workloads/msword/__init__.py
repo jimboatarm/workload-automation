@@ -23,6 +23,7 @@ from wlauto.exceptions import WorkloadError
 
 __version__ = '0.1.0'
 
+
 class MsWord(AndroidUiAutoBenchmark):
 
     name = 'msword'

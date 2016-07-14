@@ -30,9 +30,9 @@ class Reader(AndroidUiAutoBenchmark):
     activity = 'com.adobe.reader.AdobeReader'
     name = 'reader'
     package = 'com.adobe.reader'
-    view = [package+'/com.adobe.reader.help.AROnboardingHelpActivity',
-            package+'/com.adobe.reader.viewer.ARSplitPaneActivity',
-            package+'/com.adobe.reader.viewer.ARViewerActivity']
+    view = [package + '/com.adobe.reader.help.AROnboardingHelpActivity',
+            package + '/com.adobe.reader.viewer.ARSplitPaneActivity',
+            package + '/com.adobe.reader.viewer.ARViewerActivity']
     description = """
     The Adobe Reader workflow carries out the following typical productivity tasks using
     Workload-Automation.
@@ -93,9 +93,14 @@ class Reader(AndroidUiAutoBenchmark):
 
     instrumentation_log = ''.join([name, '_instrumentation.log'])
 
+    def __init__(self, device, **kwargs):
+        super(Reader, self).__init__(device, **kwargs)
+        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.reader_local_dir = self.device.path.join(self.device.external_storage_directory,
+                                                      'Android/data/com.adobe.reader/files/')
+
     def validate(self):
         super(Reader, self).validate()
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
         self.uiauto_params['package'] = self.package
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file
@@ -111,9 +116,6 @@ class Reader(AndroidUiAutoBenchmark):
 
         if not self.device.is_network_connected():
             raise DeviceError('Network is not connected for device {}'.format(self.device.name))
-
-        self.reader_local_dir = self.device.path.join(self.device.external_storage_directory,
-                                                      'Android/data/com.adobe.reader/files/')
 
     def setup(self, context):
         super(Reader, self).setup(context)

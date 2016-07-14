@@ -196,7 +196,7 @@ class ApkWorkload(Workload):
     def setup(self, context):
         self.initialize_package(context)
         if self.launch_main:
-            self.launch_package() # launch default activity without intent data
+            self.launch_package()  # launch default activity without intent data
         self.device.execute('am kill-all')  # kill all *background* activities
         self.device.clear_logcat()
 
