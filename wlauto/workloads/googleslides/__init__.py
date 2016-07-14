@@ -16,9 +16,12 @@
 import os
 import os.path as path
 import re
+import shutil
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.utils.types import list_of_strings
 
+
+__version__ = '0.1.0'
 
 class GoogleSlides(AndroidUiAutoBenchmark):
 
@@ -123,6 +126,10 @@ class GoogleSlides(AndroidUiAutoBenchmark):
         self.logger.info('local_dir={}, local_file={}'.format(self.local_dir, self.local_file))
         self.logger.info('device_dir={}, wa_test_file={}'.format(self.device_dir, self.wa_test_file))
         if self.local_file:
+            # Copy to dependencies folder if necessary
+            if not path.isfile(path.join(self.local_dir, self.local_file)):
+                filepath = path.join(path.dirname(__file__), self.local_file)
+                shutil.copy(filepath, self.local_dir)
             # push local PPT file
             for entry in os.listdir(self.local_dir):
                 if entry == self.local_file:
