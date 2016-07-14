@@ -19,7 +19,7 @@ import re
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import DeviceError
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 class Googleplaybooks(AndroidUiAutoBenchmark):
@@ -73,7 +73,7 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
                   """),
     ]
 
-    instrumentation_log = ''.join([name, '_instrumentation.log'])
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Googleplaybooks, self).__init__(device, **kwargs)
@@ -91,6 +91,7 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
     def initialize(self, context):
         super(Googleplaybooks, self).initialize(context)
 
+        # This workload relies on the internet so check that there is a working internet connection
         if not self.device.is_network_connected():
             raise DeviceError('Network is not connected for device {}'.format(self.device.name))
 
