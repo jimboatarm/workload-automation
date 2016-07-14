@@ -44,6 +44,11 @@ public class UiAutomation extends UxPerfUiAutomation {
     public void runUiAutomation() throws Exception {
         parameters = getParams();
         String filename = parameters.getString("filename");
+
+        // Replace lost spaces that were removed when passing parameters to
+        // uiautomator on the command line.  This is not required in the second
+        // search string since we want to allow underscores to be searched
+        // within the text. e.g. TEST_SEARCH_STRING in uxperf_test_doc.pdf.
         String[] searchStrings = {parameters.getString("first_search_string").replaceAll("_", " "),
                                   parameters.getString("second_search_string")};
 

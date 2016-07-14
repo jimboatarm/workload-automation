@@ -77,17 +77,23 @@ class Reader(AndroidUiAutoBenchmark):
         Parameter('document_name', kind=str, default="uxperf_test_doc.pdf",
                   description="""
                   The document name to use for the Gesture and Search test.
+
                   Note: spaces must be replaced with underscores in the document name.
                   """),
         Parameter('first_search_string', kind=str, default="The_quick_brown_fox_jumps_over_the_lazy_dog",
                   description="""
-                  The first test string to use for the word search test.
-                  Note: Accepts single words only.
+                  The first test string to use for the word search test. This
+                  string has its spaces replaced with underscores before being
+                  passed to UiAutomator. The spaces are then restored in the
+                  workload before being passed to the application.
                   """),
         Parameter('second_search_string', kind=str, default="TEST_SEARCH_STRING",
                   description="""
                   The second test string to use for the word search test.
-                  Note: This must be a single word - spaces will be replaced with underscores
+
+                  Note: This MUST be a single word - or spaces will be replaced
+                  with underscores. This is to conform with the default test
+                  document which has a default search string with underscores.
                   """),
     ]
 
