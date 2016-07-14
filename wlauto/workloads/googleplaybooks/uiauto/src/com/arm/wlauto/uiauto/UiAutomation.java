@@ -261,7 +261,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         result.start();
 
         UiObject clickable = new UiObject(new UiSelector().longClickable(true));
-        uiDevicePerformLongClick(clickable, 100);
+        uiObjectPerformLongClick(clickable, 100);
 
         UiObject addNoteButton = new UiObject(
                 new UiSelector().resourceId("com.google.android.apps.books:id/add_note_button"));
@@ -288,7 +288,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         Timer result = new Timer();
         result.start();
         UiObject clickable = new UiObject(new UiSelector().longClickable(true));
-        uiDevicePerformLongClick(clickable, 100);
+        uiObjectPerformLongClick(clickable, 100);
 
         UiObject removeButton = new UiObject(
                 new UiSelector().resourceId("com.google.android.apps.books:id/remove_highlight_button"));

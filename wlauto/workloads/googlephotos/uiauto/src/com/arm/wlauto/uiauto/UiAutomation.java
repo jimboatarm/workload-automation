@@ -419,12 +419,12 @@ public class UiAutomation extends UxPerfUiAutomation {
         // photographs position while on other versions a zero index is used.
         // Try both possiblities before throwing an exception.
         if (photo.exists()) {
-            uiDevicePerformLongClick(photo, 100);
+            uiObjectPerformLongClick(photo, 100);
         } else {
             photo = new UiObject(new UiSelector().resourceId("com.google.android.apps.photos:id/recycler_view")
                                                  .childSelector(new UiSelector()
                                                  .index(index - 1)));
-            uiDevicePerformLongClick(photo, 100);
+            uiObjectPerformLongClick(photo, 100);
         }
     }
 }

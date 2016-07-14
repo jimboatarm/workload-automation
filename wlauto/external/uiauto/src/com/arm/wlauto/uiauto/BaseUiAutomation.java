@@ -338,10 +338,10 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
         getUiDevice().unfreezeRotation();
     }
 
-   public void uiDevicePerformLongClick(UiObject view, int steps) throws Exception {
+   public void uiObjectPerformLongClick(UiObject view, int steps) throws Exception {
         Rect rect = view.getBounds();
         UiDevice.getInstance().swipe(rect.centerX(), rect.centerY(),
-                                          rect.centerX(), rect.centerY(), steps);
+                                     rect.centerX(), rect.centerY(), steps);
     }
 
     public void uiDeviceSwipeVertical(int startY, int endY, int xCoordinate, int steps) {
