@@ -20,7 +20,7 @@ from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import DeviceError
 from wlauto.exceptions import NotFoundError
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 class Googlephotos(AndroidUiAutoBenchmark):
@@ -61,7 +61,7 @@ class Googlephotos(AndroidUiAutoBenchmark):
                   """),
     ]
 
-    instrumentation_log = ''.join([name, '_instrumentation.log'])
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Googlephotos, self).__init__(device, **kwargs)
@@ -78,10 +78,10 @@ class Googlephotos(AndroidUiAutoBenchmark):
         super(Googlephotos, self).initialize(context)
 
         # Check for workload dependencies before proceeding
-        jpeg_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.endswith(".jpg")]
+        jpeg_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(('.jpg', '.jpeg'))]
 
         if len(jpeg_files) < 4:
-            raise NotFoundError("This workload requires a minimum of four {} files in {}".format('jpg',
+            raise NotFoundError("This workload requires a minimum of four {} files in {}".format('jpe?g',
                                 self.dependencies_directory))
         else:
             for entry in jpeg_files:
@@ -114,17 +114,15 @@ class Googlephotos(AndroidUiAutoBenchmark):
     def teardown(self, context):
         super(Googlephotos, self).teardown(context)
 
-        regex = re.compile(r'^\w+~\d+\.jpg$')
+        regex = re.compile(r'^\w+~\d+\.jpe?g$')
 
         for entry in self.device.listdir(self.device.working_directory):
-            match = regex.search(entry)
             if entry.endswith(".log"):
                 self.device.pull_file(os.path.join(self.device.working_directory, entry),
                                       context.output_directory)
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
-
             # Clean up edited files on each iteration
-            if match:
+            if regex.search(entry):
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
 
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
@@ -133,7 +131,7 @@ class Googlephotos(AndroidUiAutoBenchmark):
         super(Googlephotos, self).finalize(context)
 
         for entry in self.device.listdir(self.device.working_directory):
-            if entry.endswith(".jpg"):
+            if entry.lower().endswith(('.jpg', '.jpeg')):
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
 
         # Force a re-index of the mediaserver cache to removed cached files

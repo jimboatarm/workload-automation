@@ -239,7 +239,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             timingResults.put(runName, logger.result());
         }
 
-        saveAndReturn();
+        closeAndReturn(true);
     }
 
     private void cropPhotoTest() throws Exception {
@@ -283,7 +283,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             timingResults.put(runName, logger.result());
         }
 
-        saveAndReturn();
+        closeAndReturn(true);
     }
 
     private void rotatePhotoTest() throws Exception {
@@ -315,7 +315,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             timingResults.put(runName, logger.result());
         }
 
-        saveAndReturn();
+        closeAndReturn(true);
     }
 
     // Helper to slide the seekbar during photo edit.
@@ -402,15 +402,26 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
     }
 
-    // Helper that accepts, saves and navigates back to application home screen after an edit operation
-    public void saveAndReturn() throws Exception {
+    // Helper that accepts, closes and navigates back to application home screen after an edit operation.
+    // dontsave - True will discard the image. False will save the image
+    public void closeAndReturn(final boolean dontsave) throws Exception {
 
         UiObject accept = getUiObjectByDescription("Accept", "android.widget.ImageView");
         accept.click();
 
-        UiObject save = getUiObjectByText("SAVE", "android.widget.TextView");
-        save.waitForExists(viewTimeout);
-        save.click();
+        if (dontsave) {
+            UiObject close = getUiObjectByDescription("Close editor", "android.widget.ImageView");
+            close.click();
+
+            UiObject discard = getUiObjectByText("DISCARD", "android.widget.Button");
+            discard.waitForExists(viewTimeout);
+            discard.click();
+        }
+        else {
+            UiObject save = getUiObjectByText("SAVE", "android.widget.TextView");
+            save.waitForExists(viewTimeout);
+            save.click();
+        }
 
         UiObject navigateUpButton =
             new UiObject(new UiSelector().descriptionContains("Navigate Up")
