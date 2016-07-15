@@ -46,6 +46,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         parameters = getParams();
 
         String bookTitle = parameters.getString("book_title").replace("_", " ");
+        String chapterPagenum = parameters.getString("chapter_pagenum");
         String searchWord = parameters.getString("search_word");
         String noteText = "This is a test note";
 
@@ -55,14 +56,14 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         openMyLibrary();
         searchForBook(bookTitle);
+        selectFirstPage();
 
         UiWatcher pageSyncPopUpWatcher = createPopUpWatcher();
         registerWatcher("pageSyncPopUp", pageSyncPopUpWatcher);
         runWatchers();
 
-        selectBook(0); // Select the first book
         gesturesTest();
-        selectRandomChapter();
+        selectChapter(chapterPagenum);
         addNote(noteText);
         removeNote();
         searchForWord(searchWord);
@@ -175,7 +176,25 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         result.end();
         timingResults.put("search_for_book", result);
-        pressBack();
+
+        String desc = String.format("Book: " + text);
+        UiObject book = getUiObjectByDescription(desc, "android.widget.TextView");
+        book.click();
+
+
+        UiObject add = new UiObject(new UiSelector().textContains("ADD TO LIBRARY")
+                                                    .className("android.widget.Button"));
+        if (add.exists()) {
+            add.click();
+        }
+        else {
+            UiObject read = getUiObjectByText("READ", "android.widget.Button");
+            read.click();
+        }
+        
+        if (!getPageView().waitForExists(viewTimeout)) {
+            throw new UiObjectNotFoundException("Could not find \"page view\".");
+        }
     }
 
 
@@ -184,8 +203,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         // Perform a range of swipe tests while browsing home photoplaybooks gallery
         LinkedHashMap<String, GestureTestParams> testParams = new LinkedHashMap<String, GestureTestParams>();
-        testParams.put("swipe_left", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.LEFT, 10));
-        testParams.put("swipe_right", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.RIGHT, 10));
+        testParams.put("swipe_left", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.LEFT, 20));
+        testParams.put("swipe_right", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.RIGHT, 20));
         testParams.put("pinch_out", new GestureTestParams(GestureType.PINCH, PinchType.OUT, 100, 50));
         testParams.put("pinch_in", new GestureTestParams(GestureType.PINCH, PinchType.IN, 100, 50));
 
@@ -233,8 +252,46 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
     }
 
-    private void selectRandomChapter() throws Exception {
-        String testTag = "select_random_chapter";
+    private UiObject searchPage(final UiObject view, final String pagenum, final Direction updown, final int attempts) throws Exception{
+        if (attempts <= 0) {
+            throw new UiObjectNotFoundException("Could not find \"page number\" after several attempts.");
+        }
+
+        String search = String.format("page " + pagenum);
+        UiObject page = new UiObject(new UiSelector().description(search)
+                                                    .className("android.widget.TextView"));
+        if (!page.exists()) {
+            // Scroll up by swiping down
+            if (updown == Direction.UP) {
+                view.swipeDown(200);
+            }
+            // Default case is to scroll down (swipe up)
+            else {
+                view.swipeUp(200);
+            }
+            searchPage(view, pagenum, updown, attempts-1);
+        }
+        return page;
+    }
+
+    private void selectFirstPage() throws Exception {
+        getDropdownMenu();
+
+        UiObject contents = getUiObjectByResourceId("com.google.android.apps.books:id/menu_reader_toc",
+                                                    "android.widget.TextView");
+        contents.clickAndWaitForNewWindow(uiAutoTimeout);
+
+        UiObject toChapterView = getUiObjectByResourceId("com.google.android.apps.books:id/toc_list_view",
+                                                         "android.widget.ExpandableListView");
+
+        UiObject page = searchPage(toChapterView, "1", Direction.UP, 10);
+        page.click();
+
+        waitForPage();
+    }
+
+    private void selectChapter(final String chapter_pagenum) throws Exception {
+        String testTag = "select_chapter";
         SurfaceLogger logger = new SurfaceLogger(testTag, parameters);
 
         getDropdownMenu();
@@ -246,9 +303,9 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject toChapterView = getUiObjectByResourceId("com.google.android.apps.books:id/toc_list_view",
                                                          "android.widget.ExpandableListView");
 
+        UiObject page = searchPage(toChapterView, chapter_pagenum, Direction.DOWN, 10);
         logger.start();
-        toChapterView.swipeUp(100);
-        tapDisplayCentre();
+        page.clickAndWaitForNewWindow(viewTimeout);
         logger.stop();
 
         waitForPage();
@@ -370,7 +427,9 @@ public class UiAutomation extends UxPerfUiAutomation {
             timingResults.put(String.format(testTag + "_" + style), logger.result());
         }
 
-        pressBack();
+        sleep(2);
+        tapDisplayCentre();
+        waitForPage();
     }
 
     private void aboutBook() throws Exception {
@@ -390,6 +449,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         result.end();
 
         timingResults.put("about_book", result);
+
         pressBack();
     }
 
@@ -414,7 +474,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         sleep(1); // Allow previous views to settle
         int height = getDisplayHeight();
         int width = getDisplayCentreWidth();
-        getUiDevice().swipe(width, 5, width, height / 10, 20);
+        getUiDevice().swipe(width, 20, width, height / 10, 50);
     }
 
     // Helper for returning common UiObject page view
