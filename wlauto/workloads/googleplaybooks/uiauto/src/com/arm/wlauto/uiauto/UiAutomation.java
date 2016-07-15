@@ -46,6 +46,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         parameters = getParams();
 
         String bookTitle = parameters.getString("book_title").replace("_", " ");
+        String chapterPagenum = parameters.getString("chapter_pagenum");
         String searchWord = parameters.getString("search_word");
         String noteText = "This is a test note";
 
@@ -55,14 +56,14 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         openMyLibrary();
         searchForBook(bookTitle);
+        selectFirstPage();
 
         UiWatcher pageSyncPopUpWatcher = createPopUpWatcher();
         registerWatcher("pageSyncPopUp", pageSyncPopUpWatcher);
         runWatchers();
 
-        selectBook(0); // Select the first book
         gesturesTest();
-        selectRandomChapter();
+        selectChapter(chapterPagenum);
         addNote(noteText);
         removeNote();
         searchForWord(searchWord);
@@ -175,7 +176,25 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         result.end();
         timingResults.put("search_for_book", result);
-        pressBack();
+
+        String desc = String.format("Book: " + text);
+        UiObject book = getUiObjectByDescription(desc, "android.widget.TextView");
+        book.click();
+
+
+        UiObject add = new UiObject(new UiSelector().textContains("ADD TO LIBRARY")
+                                                    .className("android.widget.Button"));
+        if (add.exists()) {
+            add.click();
+        }
+        else {
+            UiObject read = getUiObjectByText("READ", "android.widget.Button");
+            read.click();
+        }
+        
+        if (!getPageView().waitForExists(viewTimeout)) {
+            throw new UiObjectNotFoundException("Could not find \"page view\".");
+        }
     }
 
 
@@ -233,10 +252,17 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
     }
 
-    private void selectRandomChapter() throws Exception {
-        String testTag = "select_random_chapter";
-        SurfaceLogger logger = new SurfaceLogger(testTag, parameters);
+    private UiObject searchFirstPage(final UiObject view) throws Exception{
+        UiObject page = new UiObject(new UiSelector().description("page 1")
+                                                    .className("android.widget.TextView"));
+        if (!page.exists()) {
+            view.swipeDown(100);
+            searchFirstPage(view);
+        }
+        return page;
+    }
 
+    private void selectFirstPage() throws Exception {
         getDropdownMenu();
 
         UiObject contents = getUiObjectByResourceId("com.google.android.apps.books:id/menu_reader_toc",
@@ -246,9 +272,27 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject toChapterView = getUiObjectByResourceId("com.google.android.apps.books:id/toc_list_view",
                                                          "android.widget.ExpandableListView");
 
+        UiObject page = searchFirstPage(toChapterView);
+        page.click();
+
+        waitForPage();
+    }
+
+    private void selectChapter(final String chapter_pagenum) throws Exception {
+        String testTag = "select_chapter";
+        SurfaceLogger logger = new SurfaceLogger(testTag, parameters);
+
+        getDropdownMenu();
+
+        UiObject contents = getUiObjectByResourceId("com.google.android.apps.books:id/menu_reader_toc",
+                                                    "android.widget.TextView");
+        contents.clickAndWaitForNewWindow(uiAutoTimeout);
+
+        String search = String.format("page " + chapter_pagenum);
+        UiObject page = new UiObject(new UiSelector().description(search)
+                                                    .className("android.widget.TextView"));
         logger.start();
-        toChapterView.swipeUp(100);
-        tapDisplayCentre();
+        page.clickAndWaitForNewWindow(viewTimeout);
         logger.stop();
 
         waitForPage();

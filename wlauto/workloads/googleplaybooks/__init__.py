@@ -60,6 +60,11 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
                   The book title to search for within Google Play Books archive.
                   Note: spaces must be replaced with underscores in the book title.
                   """),
+        Parameter('select_chapter_pagenum', kind=int, mandatory=False, default=1,
+                  description="""
+                  The Page Number to search for within a selected book's Chapter list.
+                  Note: Accepts integers only.
+                  """),
         Parameter('search_word', kind=str, mandatory=False, default='the',
                   description="""
                   The word to search for within a selected book.
@@ -86,6 +91,7 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
         self.uiauto_params['book_title'] = self.search_book_title
+        self.uiauto_params['chapter_pagenum'] = str(self.select_chapter_pagenum)
         self.uiauto_params['search_word'] = self.search_word
 
     def initialize(self, context):
