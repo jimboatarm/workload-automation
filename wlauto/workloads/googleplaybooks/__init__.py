@@ -55,12 +55,13 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
     """
 
     parameters = [
-        Parameter('search_book_title', kind=str, mandatory=False, default='Shakespeare',
+        Parameter('search_book_title', kind=str, mandatory=True,
                   description="""
                   The book title to search for within Google Play Books archive.
+                  The book must either be already in the account's library, or free to purchase.
                   Note: spaces must be replaced with underscores in the book title.
                   """),
-        Parameter('select_chapter_pagenum', kind=int, mandatory=False, default=1,
+        Parameter('select_chapter_pagenum', kind=int, mandatory=True,
                   description="""
                   The Page Number to search for within a selected book's Chapter list.
                   Note: Accepts integers only.
