@@ -42,12 +42,13 @@ public class UiAutomation extends UxPerfUiAutomation {
     private LinkedHashMap<String, Timer> timingResults = new LinkedHashMap<String, Timer>();
 
     public void runUiAutomation() throws Exception {
+        boolean networkConnected = false;
         parameters = getParams();
 
         pauseForSplashScreen();
         setScreenOrientation(ScreenOrientation.NATURAL);
         confirmAccess();
-        dismissWelcomeView();
+        dismissWelcomeView(networkConnected);
         closePromotionPopUp();
         selectWorkingGallery();
         gesturesTest();
@@ -63,7 +64,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         sleep(5); // Pause while splash screen loads
     }
 
-    public void dismissWelcomeView() throws Exception {
+    public void dismissWelcomeView(boolean networkConnected) throws Exception {
 
         // Click through the first two pages and make sure that we don't sign
         // in to our google account. This ensures the same set of photographs
@@ -76,23 +77,35 @@ public class UiAutomation extends UxPerfUiAutomation {
         waitObject(getStartedButton, viewTimeoutSecs);
         getStartedButton.click();
 
-        UiObject welcomeButton =
-            getUiObjectByResourceId("com.google.android.apps.photos:id/name",
-                                    "android.widget.TextView");
-        welcomeButton.click();
+        // A network connection is not required for this workload. However,
+        // when the Google Photos app is invoked from the multiapp workload a
+        // connection is required for sharing content. Handle the different UI
+        // pathways when dismissing welcome views here.
+        if (networkConnected) {
+            UiObject welcomeButton =
+                getUiObjectByResourceId("com.google.android.apps.photos:id/name",
+                        "android.widget.TextView");
+            welcomeButton.click();
 
-        UiObject useWithoutAccount =
-            getUiObjectByText("Use without an account", "android.widget.TextView");
-        useWithoutAccount.clickAndWaitForNewWindow();
+            UiObject useWithoutAccount =
+                getUiObjectByText("Use without an account", "android.widget.TextView");
+            useWithoutAccount.clickAndWaitForNewWindow();
 
-        // Dismiss welcome views promoting app features
-        sleep(1);
-        uiDeviceSwipeLeft(10);
-        sleep(1);
-        uiDeviceSwipeLeft(10);
-        sleep(1);
-        uiDeviceSwipeLeft(10);
-        sleep(1);
+            // Dismiss welcome views promoting app features
+            sleep(1);
+            uiDeviceSwipeLeft(10);
+            sleep(1);
+            uiDeviceSwipeLeft(10);
+            sleep(1);
+            uiDeviceSwipeLeft(10);
+            sleep(1);
+
+        } else {
+            UiObject doNotSignInButton =
+            getUiObjectByResourceId("com.google.android.apps.photos:id/dont_sign_in_button",
+                                    "android.widget.Button");
+            doNotSignInButton.click();
+        }
 
         UiObject nextButton =
             new UiObject(new UiSelector().resourceId("com.google.android.apps.photos:id/next_button")
