@@ -19,7 +19,7 @@ import re
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import DeviceError
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 class Googleplaybooks(AndroidUiAutoBenchmark):
@@ -55,10 +55,16 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
     """
 
     parameters = [
-        Parameter('search_book_title', kind=str, mandatory=False, default='Shakespeare',
+        Parameter('search_book_title', kind=str, mandatory=True,
                   description="""
                   The book title to search for within Google Play Books archive.
+                  The book must either be already in the account's library, or free to purchase.
                   Note: spaces must be replaced with underscores in the book title.
+                  """),
+        Parameter('select_chapter_pagenum', kind=int, mandatory=True,
+                  description="""
+                  The Page Number to search for within a selected book's Chapter list.
+                  Note: Accepts integers only.
                   """),
         Parameter('search_word', kind=str, mandatory=False, default='the',
                   description="""
@@ -73,7 +79,7 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
                   """),
     ]
 
-    instrumentation_log = ''.join([name, '_instrumentation.log'])
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Googleplaybooks, self).__init__(device, **kwargs)
@@ -86,11 +92,13 @@ class Googleplaybooks(AndroidUiAutoBenchmark):
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
         self.uiauto_params['book_title'] = self.search_book_title
+        self.uiauto_params['chapter_pagenum'] = str(self.select_chapter_pagenum)
         self.uiauto_params['search_word'] = self.search_word
 
     def initialize(self, context):
         super(Googleplaybooks, self).initialize(context)
 
+        # This workload relies on the internet so check that there is a working internet connection
         if not self.device.is_network_connected():
             raise DeviceError('Network is not connected for device {}'.format(self.device.name))
 
