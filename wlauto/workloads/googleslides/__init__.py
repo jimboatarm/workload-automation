@@ -20,8 +20,8 @@ import shutil
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.utils.types import list_of_strings
 
+__version__ = '0.1.1'
 
-__version__ = '0.1.0'
 
 class GoogleSlides(AndroidUiAutoBenchmark):
 
@@ -99,7 +99,7 @@ class GoogleSlides(AndroidUiAutoBenchmark):
                   '''),
     ]
 
-    instrumentation_log = '{}_instrumentation.log'.format(name)
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(GoogleSlides, self).__init__(device, **kwargs)
