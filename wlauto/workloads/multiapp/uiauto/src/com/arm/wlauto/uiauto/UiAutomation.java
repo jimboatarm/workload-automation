@@ -22,7 +22,6 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     public void runUiAutomation() throws Exception {
 
-        boolean networkConnected = true;
         parameters = getParams();
 
         com.arm.wlauto.uiauto.googlephotos.UiAutomation googlephotos =
@@ -34,7 +33,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         googlephotos.pauseForSplashScreen();
         setScreenOrientation(ScreenOrientation.NATURAL);
         confirmAccess();
-        googlephotos.dismissWelcomeView(networkConnected);
+        googlephotos.dismissWelcomeView();
         googlephotos.closePromotionPopUp();
         googlephotos.selectWorkingGallery();
 
