@@ -20,12 +20,7 @@ import time
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import DeviceError
 
-__version__ = '0.1.0'
-
-SKYPE_ACTION_URIS = {
-    'call': 'call',
-    'video': 'call&video=true',
-}
+__version__ = '0.1.1'
 
 
 class Skype(AndroidUiAutoBenchmark):
@@ -55,7 +50,7 @@ class Skype(AndroidUiAutoBenchmark):
     # Skype has no default 'main' activity
     launch_main = False  # overrides extended class
 
-    instrumentation_log = '{}_instrumentation.log'.format(name)
+    instrumentation_log = name + '_instrumentation.log'
 
     parameters = [
         Parameter('login_name', kind=str, mandatory=True,
@@ -96,6 +91,7 @@ class Skype(AndroidUiAutoBenchmark):
     def initialize(self, context):
         super(Skype, self).initialize(context)
 
+        # This workload relies on the internet so check that there is a working internet connection
         if not self.device.is_network_connected():
             raise DeviceError('Network is not connected for device {}'.format(self.device.name))
 
@@ -104,9 +100,6 @@ class Skype(AndroidUiAutoBenchmark):
         self.device.execute('am force-stop {}'.format(self.package))
         self.device.execute('am start -W -a android.intent.action.VIEW -d skype:dummy?dummy')
         time.sleep(1)
-
-    def run(self, context):
-        super(Skype, self).run(context)
 
     def update_result(self, context):
         super(Skype, self).update_result(context)
