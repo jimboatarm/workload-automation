@@ -42,13 +42,12 @@ public class UiAutomation extends UxPerfUiAutomation {
     private LinkedHashMap<String, Timer> timingResults = new LinkedHashMap<String, Timer>();
 
     public void runUiAutomation() throws Exception {
-        boolean networkConnected = false;
         parameters = getParams();
 
         pauseForSplashScreen();
         setScreenOrientation(ScreenOrientation.NATURAL);
         confirmAccess();
-        dismissWelcomeView(networkConnected);
+        dismissWelcomeView();
         closePromotionPopUp();
         selectWorkingGallery();
         gesturesTest();
@@ -64,7 +63,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         sleep(5); // Pause while splash screen loads
     }
 
-    public void dismissWelcomeView(boolean networkConnected) throws Exception {
+    public void dismissWelcomeView() throws Exception {
 
         // Click through the first two pages and make sure that we don't sign
         // in to our google account. This ensures the same set of photographs
@@ -81,7 +80,12 @@ public class UiAutomation extends UxPerfUiAutomation {
         // when the Google Photos app is invoked from the multiapp workload a
         // connection is required for sharing content. Handle the different UI
         // pathways when dismissing welcome views here.
-        if (networkConnected) {
+        UiObject doNotSignInButton =
+            new UiObject(new UiSelector().resourceId("com.google.android.apps.photos:id/dont_sign_in_button"));
+
+        if (doNotSignInButton.exists()) {
+            doNotSignInButton.click();
+        } else {
             UiObject welcomeButton =
                 getUiObjectByResourceId("com.google.android.apps.photos:id/name",
                         "android.widget.TextView");
@@ -99,12 +103,6 @@ public class UiAutomation extends UxPerfUiAutomation {
             sleep(1);
             uiDeviceSwipeLeft(10);
             sleep(1);
-
-        } else {
-            UiObject doNotSignInButton =
-            getUiObjectByResourceId("com.google.android.apps.photos:id/dont_sign_in_button",
-                                    "android.widget.Button");
-            doNotSignInButton.click();
         }
 
         UiObject nextButton =
