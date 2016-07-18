@@ -116,8 +116,11 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     private void newWorkbook() throws Exception {
-        UiObject docLocation =
-            getUiObjectByText("This device > Documents", "android.widget.ToggleButton");
+        UiObject docLocation = new UiObject(new UiSelector().text("This device > Documents"));
+
+        if (!docLocation.waitForExists(viewTimeout)) {
+            throw new UiObjectNotFoundException("Could not find \"document location view\".");
+        }
         docLocation.click();
 
         UiObject selectLocation =

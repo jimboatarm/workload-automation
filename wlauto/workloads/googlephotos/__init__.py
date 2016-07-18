@@ -38,10 +38,6 @@ class Googlephotos(AndroidUiAutoBenchmark):
     various tasks, such as browsing images, performing zooms, post-processing and saving a selected
     image to file.
 
-    Although this workload attempts to be network independent it requires a network connection
-    (ideally, wifi) to run. This is because the welcome screen UI is dependent on an existing
-    connection.
-
     Test description:
     1. Four images are copied to the devices
     2. The application is started in offline access mode
@@ -80,9 +76,6 @@ class Googlephotos(AndroidUiAutoBenchmark):
 
     def initialize(self, context):
         super(Googlephotos, self).initialize(context)
-
-        if not self.device.is_network_connected():
-            raise DeviceError('Network is not connected for device {}'.format(self.device.name))
 
         # Check for workload dependencies before proceeding
         jpeg_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.endswith(".jpg")]

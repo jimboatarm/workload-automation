@@ -21,6 +21,8 @@ public class UiAutomation extends UxPerfUiAutomation {
     private LinkedHashMap<String, Timer> timingResults = new LinkedHashMap<String, Timer>();
 
     public void runUiAutomation() throws Exception {
+
+        boolean networkConnected = true;
         parameters = getParams();
 
         com.arm.wlauto.uiauto.googlephotos.UiAutomation googlephotos =
@@ -32,7 +34,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         googlephotos.pauseForSplashScreen();
         setScreenOrientation(ScreenOrientation.NATURAL);
         confirmAccess();
-        googlephotos.dismissWelcomeView();
+        googlephotos.dismissWelcomeView(networkConnected);
         googlephotos.closePromotionPopUp();
         googlephotos.selectWorkingGallery();
 

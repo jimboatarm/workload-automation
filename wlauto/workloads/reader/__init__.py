@@ -117,12 +117,6 @@ class Reader(AndroidUiAutoBenchmark):
         self.uiauto_params['first_search_string'] = self.first_search_string.replace(' ', '_')
         self.uiauto_params['second_search_string'] = self.second_search_string.replace(' ', '_')
 
-    def initialize(self, context):
-        super(Reader, self).initialize(context)
-
-        if not self.device.is_network_connected():
-            raise DeviceError('Network is not connected for device {}'.format(self.device.name))
-
     def setup(self, context):
         super(Reader, self).setup(context)
 
