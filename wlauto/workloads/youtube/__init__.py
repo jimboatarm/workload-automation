@@ -21,6 +21,8 @@ import time
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import WorkloadError
 
+__version__ = '0.1.1'
+
 
 class Youtube(AndroidUiAutoBenchmark):
 
@@ -76,7 +78,7 @@ class Youtube(AndroidUiAutoBenchmark):
 
     view = package + '/com.google.android.apps.youtube.app.WatchWhileActivity'
 
-    instrumentation_log = '{}_instrumentation.log'.format(name)
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Youtube, self).__init__(device, **kwargs)
