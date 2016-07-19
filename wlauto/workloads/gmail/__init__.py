@@ -22,7 +22,7 @@ from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import DeviceError
 from wlauto.exceptions import NotFoundError
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 class Gmail(AndroidUiAutoBenchmark):
@@ -51,7 +51,7 @@ class Gmail(AndroidUiAutoBenchmark):
     regex = re.compile(r'uxperf_gmail.*: (?P<key>\w+) (?P<value>\d+)')
 
     parameters = [
-        Parameter('recipient', default='armuxperf@gmail.com', mandatory=False,
+        Parameter('recipient', kind=str, mandatory=True,
                   description=""""
                   The email address of the recipient.  Setting a void address
                   will stop any mesage failures clogging up your device inbox
@@ -64,7 +64,7 @@ class Gmail(AndroidUiAutoBenchmark):
                   """),
     ]
 
-    instrumentation_log = ''.join([name, '_instrumentation.log'])
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Gmail, self).__init__(device, **kwargs)
@@ -81,14 +81,15 @@ class Gmail(AndroidUiAutoBenchmark):
     def initialize(self, context):
         super(Gmail, self).initialize(context)
 
+        # This workload relies on the internet so check that there is a working internet connection
         if not self.device.is_network_connected():
             raise DeviceError('Network is not connected for device {}'.format(self.device.name))
 
         # Check for workload dependencies before proceeding
-        jpeg_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.endswith(".jpg")]
+        jpeg_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(('.jpg', '.jpeg'))]
 
         if len(jpeg_files) < 5:
-            raise NotFoundError("This workload requires a minimum of five {} files in {}".format('jpg',
+            raise NotFoundError("This workload requires a minimum of five {} files in {}".format('jpe?g',
                                 self.dependencies_directory))
         else:
             for entry in jpeg_files:
@@ -129,7 +130,7 @@ class Gmail(AndroidUiAutoBenchmark):
         super(Gmail, self).finalize(context)
 
         for entry in self.device.listdir(self.device.working_directory):
-            if entry.endswith(".jpg"):
+            if entry.lower().endswith(('.jpg', '.jpeg')):
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
 
         # Force a re-index of the mediaserver cache to pick up new files
