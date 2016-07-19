@@ -20,7 +20,7 @@ from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import DeviceError
 from wlauto.exceptions import NotFoundError
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 class Powerpoint(AndroidUiAutoBenchmark):
@@ -74,9 +74,11 @@ class Powerpoint(AndroidUiAutoBenchmark):
                   test run.  The output is piped to log files which are then
                   pulled from the phone.
                   """),
-        Parameter('slide_template', kind=str, mandatory=False, default='Crop',
+        Parameter('slide_template', kind=str, mandatory=False, default='Blank_presentation',
                   description="""
                   The slide template name to use when creating a new presentation.
+                  If the device is offline, ``Blank presentation`` will be used.
+                  All other templates require networking.
                   Note: spaces must be replaced with underscores in the slide template.
                   """),
         Parameter('title_name', kind=str, mandatory=False, default='Test_Title',
@@ -106,7 +108,7 @@ class Powerpoint(AndroidUiAutoBenchmark):
                   """),
     ]
 
-    instrumentation_log = ''.join([name, '_instrumentation.log'])
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Powerpoint, self).__init__(device, **kwargs)
@@ -118,15 +120,19 @@ class Powerpoint(AndroidUiAutoBenchmark):
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
-        self.uiauto_params['slide_template'] = self.slide_template
         self.uiauto_params['title_name'] = self.title_name
         self.uiauto_params['use_test_file'] = self.use_test_file
         self.uiauto_params['test_file'] = self.test_file
         self.uiauto_params['transition_effect'] = self.transition_effect
         self.uiauto_params['number_of_slides'] = self.number_of_slides
+        # Networking is required for templates. Force use of blank template when no networking is enabled.
+        if self.device.is_network_connected():
+            self.uiauto_params['slide_template'] = self.slide_template
+        else:
+            self.uiauto_params['slide_template'] = 'Blank_presentation'
 
     def push_file(self, extension):
-        entrys = [entry for entry in os.listdir(self.dependencies_directory) if entry.endswith(extension)]
+        entrys = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(extension)]
 
         # Check for workload dependencies before proceeding
         if len(entrys) != 1:
@@ -138,17 +144,11 @@ class Powerpoint(AndroidUiAutoBenchmark):
                                       os.path.join(self.device.working_directory, entry),
                                       timeout=300)
 
-    def initialize(self, context):
-        super(Powerpoint, self).initialize(context)
-
-        if not self.device.is_network_connected():
-            raise DeviceError('Network is not connected for device {}'.format(self.device.name))
-
     def setup(self, context):
         super(Powerpoint, self).setup(context)
 
         # push file types to device
-        self.push_file(".jpg")
+        self.push_file(('.jpg', '.jpeg'))
 
         if self.use_test_file:
             self.push_file(".pptx")
@@ -178,6 +178,8 @@ class Powerpoint(AndroidUiAutoBenchmark):
     def teardown(self, context):
         super(Powerpoint, self).teardown(context)
 
+        regex = re.compile(r'Presentation( \([0-9]+\))?\.pptx')
+
         for entry in self.device.listdir(self.device.working_directory):
             if entry.endswith(".log"):
                 self.device.pull_file(os.path.join(self.device.working_directory, entry),
@@ -185,7 +187,7 @@ class Powerpoint(AndroidUiAutoBenchmark):
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
 
             # Clean up powerpoint file from 'create' test on each iteration
-            if entry == "Presentation.pptx":
+            if regex.search(entry):
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
 
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
@@ -194,7 +196,7 @@ class Powerpoint(AndroidUiAutoBenchmark):
         super(Powerpoint, self).finalize(context)
 
         for entry in self.device.listdir(self.device.working_directory):
-            if entry.endswith(".jpg") or entry.endswith(".pptx"):
+            if entry.lower().endswith(('.jpg', '.jpeg', '.pptx')):
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
 
         # Force a re-index of the mediaserver cache to removed cached files

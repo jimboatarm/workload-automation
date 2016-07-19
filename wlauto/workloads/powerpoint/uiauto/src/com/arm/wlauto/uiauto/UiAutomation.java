@@ -254,23 +254,49 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
     }
 
+    private void openHomeMenu() throws Exception {
+        UiObject button = getUiObjectByResourceId("com.microsoft.office.powerpoint:id/paletteToggleButton",
+                                                    "android.widget.Button");
+        button.clickAndWaitForNewWindow();
+    }
+
+    private void closeHomeMenu() throws Exception {
+        UiObject button = getUiObjectByResourceId("com.microsoft.office.powerpoint:id/CommandPaletteHandle",
+                                                    "android.widget.ToggleButton");
+        button.click();
+    }
+
     private void setSlideLayout() throws Exception {
+        Boolean closemenu = false;
         String testTag = "change_slide_layout";
         SurfaceLogger logger = new SurfaceLogger(testTag, parameters);
         logger.start();
 
+        // On tablets, the layout button has a description
+        UiObject layoutToggleTablet =
+            new UiObject(new UiSelector().description("Layout").className("android.widget.ToggleButton"));
+        
         // On phones, the layout button has a text field
         UiObject layoutTogglePhone =
             new UiObject(new UiSelector().text("Layout").className("android.widget.ToggleButton"));
 
-        // On tablets, the layout button has a description
-        UiObject layoutToggleTablet =
-            new UiObject(new UiSelector().description("Layout").className("android.widget.ToggleButton"));
-
-        if (layoutTogglePhone.exists()) {
+        if (layoutToggleTablet.exists()) {
+            layoutToggleTablet.click();
+        } else if (layoutTogglePhone.exists()) {
             layoutTogglePhone.click();
         } else {
-            layoutToggleTablet.click();
+            // On phones without networking, there is no shortcut bar
+            // This is the long method to get to the layout view
+            openHomeMenu();
+            closemenu = true;
+            UiObject layoutToggle =
+                new UiObject(new UiSelector().text("Layout").className("android.widget.ToggleButton"));
+            UiScrollable homeScroll =
+                new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+            while (!layoutToggle.exists()) {
+                homeScroll.scrollForward();
+            }
+            layoutToggle.click();
         }
 
         // Use blank slides for simplicity
@@ -286,6 +312,9 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         layoutView.click();
 
+        if (closemenu)
+            closeHomeMenu();
+
         logger.stop();
         timingResults.put(testTag, logger.result());
     }
@@ -294,7 +323,11 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject photoButtonPhone =
             new UiObject(new UiSelector().description("Photos").className("android.widget.Button"));
 
+        UiObject insertTabTablet =
+            new UiObject(new UiSelector().text("Insert").className("android.widget.TextView"));
+
         if (photoButtonPhone.exists()) {
+            // ### PHONE - WITH SHORTCUT MENU ###
             photoButtonPhone.click();
 
             UiObject openFromImages = getUiObjectByText("Images", "android.widget.TextView");
@@ -309,9 +342,8 @@ public class UiAutomation extends UxPerfUiAutomation {
                                          .childSelector(new UiSelector()
                                          .index(0)));
             image.click();
-        } else {
-            // On tablet devices the photo button is selectable from the insert tab menu
-            UiObject insertTabTablet = getUiObjectByText("Insert", "android.widget.TextView");
+        } else if (insertTabTablet.exists()) {
+            // ### TABLET ###
             insertTabTablet.click();
 
             UiObject pictureButtonTablet = getUiObjectByText("Pictures", "android.widget.ToggleButton");
@@ -351,8 +383,39 @@ public class UiAutomation extends UxPerfUiAutomation {
 
             folderName.click();
 
-            UiObject jpegImageFile = getUiObjectByText(".jpg", "android.widget.TextView");
+            UiObject jpegImageFile = 
+                new UiObject(new UiSelector().className("android.widget.TextView").textMatches(".*\\.jpe?g"));
             jpegImageFile.click();
+        } else {
+            // ### PHONE - WITHOUT SHORTCUT MENU ###
+            openHomeMenu();
+
+            UiObject homeButton = getUiObjectByText("Home", "android.widget.ToggleButton");
+            homeButton.click();
+
+            UiObject insertButton = getUiObjectByText("Insert", "android.widget.Button");
+            insertButton.click();
+
+            UiObject pictureButton = getUiObjectByText("Pictures", "android.widget.ToggleButton");
+            pictureButton.click();
+
+            UiObject photoButton = getUiObjectByText("Photos", "android.widget.Button");
+            photoButton.click();
+
+            UiObject openFromImages = getUiObjectByText("Images", "android.widget.TextView");
+            openFromImages.click();
+
+            UiObject workloadFolder = getUiObjectByText("wa-working", "android.widget.TextView");
+            workloadFolder.click();
+
+            // Select the first image
+            UiObject image =
+                new UiObject(new UiSelector().className("android.widget.GridView")
+                                         .childSelector(new UiSelector()
+                                         .index(0)));
+            image.click();
+
+            closeHomeMenu();
         }
     }
 
@@ -362,19 +425,27 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         UiObject commandPalettePhone =
             new UiObject(new UiSelector().resourceId("com.microsoft.office.powerpoint:id/CommandPaletteHandle"));
+        
+        UiObject transitionTabTablet = 
+            new UiObject(new UiSelector().className("android.widget.TextView").text("Transitions"));
 
-        if (commandPalettePhone.exists()) {
-            commandPalettePhone.click();
+        if (transitionTabTablet.exists()) {
+            // ### TABLET ###
+            transitionTabTablet.click();
+        } else {
+            if (commandPalettePhone.exists()) {
+                // ### PHONE - WITH SHORTCUT MENU ###
+                commandPalettePhone.click();
+            } else {
+                // ### PHONE - WITHOUT SHORTCUT MENU ###
+                openHomeMenu();
+            }
 
             UiObject homeButton = getUiObjectByText("Home", "android.widget.ToggleButton");
             homeButton.click();
 
             UiObject transitionsButton = getUiObjectByText("Transitions", "android.widget.Button");
             transitionsButton.click();
-        } else {
-            // On tablet devices the transition button is a menu tab
-            UiObject transitionTabTablet = getUiObjectByText("Transitions", "android.widget.TextView");
-            transitionTabTablet.click();
         }
 
         logger.start();
