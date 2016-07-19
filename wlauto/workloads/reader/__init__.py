@@ -22,7 +22,7 @@ from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.exceptions import DeviceError
 from wlauto.exceptions import NotFoundError
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 class Reader(AndroidUiAutoBenchmark):
@@ -66,14 +66,6 @@ class Reader(AndroidUiAutoBenchmark):
                   test run.  The output is piped to log files which are then
                   pulled from the phone.
                   """),
-        Parameter('email', kind=str, default="email@gmail.com",
-                  description="""
-                  Email account used to register with Adobe online services.
-                  """),
-        Parameter('password', kind=str, default="password",
-                  description="""
-                  Password for Adobe online services.
-                  """),
         Parameter('document_name', kind=str, default="uxperf_test_doc.pdf",
                   description="""
                   The document name to use for the Gesture and Search test.
@@ -97,7 +89,7 @@ class Reader(AndroidUiAutoBenchmark):
                   """),
     ]
 
-    instrumentation_log = ''.join([name, '_instrumentation.log'])
+    instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Reader, self).__init__(device, **kwargs)
@@ -110,8 +102,6 @@ class Reader(AndroidUiAutoBenchmark):
         self.uiauto_params['package'] = self.package
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file
-        self.uiauto_params['email'] = self.email
-        self.uiauto_params['password'] = self.password
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
         self.uiauto_params['filename'] = self.document_name.replace(' ', '_')
         self.uiauto_params['first_search_string'] = self.first_search_string.replace(' ', '_')
@@ -121,7 +111,7 @@ class Reader(AndroidUiAutoBenchmark):
         super(Reader, self).setup(context)
 
         # Check for workload dependencies before proceeding
-        pdf_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.endswith(".pdf")]
+        pdf_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(".pdf")]
 
         if not len(pdf_files):
             raise NotFoundError("Cannot find {} file(s) in {}".format('pdf', self.dependencies_directory))
@@ -158,5 +148,5 @@ class Reader(AndroidUiAutoBenchmark):
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
 
         for entry in self.device.listdir(self.reader_local_dir):
-            if entry.endswith(".pdf"):
+            if entry.lower().endswith('.pdf'):
                 self.device.delete_file(os.path.join(self.reader_local_dir, entry))
