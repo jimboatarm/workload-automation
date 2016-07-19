@@ -77,7 +77,7 @@ class Powerpoint(AndroidUiAutoBenchmark):
         Parameter('slide_template', kind=str, mandatory=False, default='Blank_presentation',
                   description="""
                   The slide template name to use when creating a new presentation.
-                  Only ``Blank presentation`` is allowed when offline.
+                  If the device is offline, ``Blank presentation`` will be used.
                   All other templates require networking.
                   Note: spaces must be replaced with underscores in the slide template.
                   """),
@@ -120,12 +120,16 @@ class Powerpoint(AndroidUiAutoBenchmark):
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
-        self.uiauto_params['slide_template'] = self.slide_template
         self.uiauto_params['title_name'] = self.title_name
         self.uiauto_params['use_test_file'] = self.use_test_file
         self.uiauto_params['test_file'] = self.test_file
         self.uiauto_params['transition_effect'] = self.transition_effect
         self.uiauto_params['number_of_slides'] = self.number_of_slides
+        # Networking is required for templates. Force use of blank template when no networking is enabled.
+        if self.device.is_network_connected():
+            self.uiauto_params['slide_template'] = self.slide_template
+        else:
+            self.uiauto_params['slide_template'] = 'Blank_presentation'
 
     def push_file(self, extension):
         entrys = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(extension)]
