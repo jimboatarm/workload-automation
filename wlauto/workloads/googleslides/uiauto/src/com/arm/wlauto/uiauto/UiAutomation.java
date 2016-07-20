@@ -38,9 +38,6 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     public static final String PACKAGE = "com.google.android.apps.docs.editors.slides";
     public static final String PACKAGE_ID = PACKAGE + ":id/";
-    public static final String ACTIVITY_DOCLIST = "com.google.android.apps.docs.app.DocListActivity";
-    public static final String ACTIVITY_SLIDES = "com.qo.android.quickpoint.Quickpoint";
-    public static final String ACTIVITY_SETTINGS = "com.google.android.apps.docs.app.DocsPreferencesActivity";
 
     public static final String CLASS_TEXT_VIEW = "android.widget.TextView";
     public static final String CLASS_IMAGE_VIEW = "android.widget.ImageView";
@@ -64,18 +61,17 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     protected Map<String, Timer> results = new LinkedHashMap<String, Timer>();
     protected Timer timer = new Timer();
+    protected SurfaceLogger logger;
 
     protected Bundle parameters;
-    protected boolean dumpsysEnabled;
     protected String outputDir;
     protected String localFile;
     protected int slideCount;
     protected boolean useLocalFile;
 
     public void parseParams(Bundle parameters) throws Exception {
-        dumpsysEnabled = Boolean.parseBoolean(parameters.getString("dumpsys_enabled"));
         outputDir = parameters.getString("output_dir");
-        localFile = parameters.getString("local_file");
+        localFile = parameters.getString("test_file");
         useLocalFile = localFile != null;
         if (useLocalFile) {
             slideCount = Integer.parseInt(parameters.getString("slide_count"));
@@ -88,47 +84,36 @@ public class UiAutomation extends UxPerfUiAutomation {
         skipWelcomeScreen();
         openAndCloseDrawer();
         enablePowerpointCompat();
+        testEditNewSlidesDocument(NEW_DOC_FILENAME);
         if (useLocalFile) {
             testSlideshowFromStorage(localFile);
-        } else {
-            testEditNewSlidesDocument(NEW_DOC_FILENAME);
         }
         writeResultsToFile(results, parameters.getString("results_file"));
     }
 
     protected void skipWelcomeScreen() throws Exception {
-        timer = new Timer();
-        timer.start();
+        startLogger("skip_welcome");
         clickUiObject(BY_TEXT, "Skip", true);
-        timer.end();
-        results.put("skip_welcome", timer);
+        stopLogger("skip_welcome");
         sleep(1);
         dismissWorkOfflineBanner(); // if it appears on the homescreen
     }
 
     protected void openAndCloseDrawer() throws Exception {
-        startDumpsys(ACTIVITY_DOCLIST);
-        timer = new Timer();
-        timer.start();
+        startLogger("open_drawer");
         clickUiObject(BY_DESC, "drawer");
         getUiDevice().pressBack();
-        timer.end();
-        results.put("open_drawer", timer);
-        endDumpsys(ACTIVITY_DOCLIST, "open_drawer");
+        stopLogger("open_drawer");
         sleep(1);
     }
 
     protected void enablePowerpointCompat() throws Exception {
-        startDumpsys(ACTIVITY_SETTINGS);
-        timer = new Timer();
-        timer.start();
+        startLogger("enable_ppt_compat");
         clickUiObject(BY_DESC, "drawer");
         clickUiObject(BY_TEXT, "Settings", true);
         clickUiObject(BY_TEXT, "Create PowerPoint");
         getUiDevice().pressBack();
-        timer.end();
-        results.put("enable_ppt_compat", timer);
-        endDumpsys(ACTIVITY_SETTINGS, "enable_ppt_compat");
+        stopLogger("enable_ppt_compat");
         sleep(1);
     }
 
@@ -146,22 +131,18 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
 
         // Open document
-        timer = new Timer();
-        timer.start();
+        startLogger("open_file_picker");
         clickUiObject(BY_DESC, "Open presentation");
         clickUiObject(BY_TEXT, "Device storage", true);
-        timer.end();
-        results.put("open_file_picker", timer);
+        stopLogger("open_file_picker");
 
         // Scroll through document list if necessary
         UiScrollable list = new UiScrollable(new UiSelector().className("android.widget.ListView"));
         list.scrollIntoView(new UiSelector().textContains(docName));
-        timer = new Timer();
-        timer.start();
+        startLogger("open_document");
         clickUiObject(BY_TEXT, docName);
         clickUiObject(BY_TEXT, "Open", CLASS_BUTTON, true);
-        timer.end();
-        results.put("open_document", timer);
+        stopLogger("open_document");
         sleep(5);
 
         // Begin Slide show test
@@ -173,75 +154,55 @@ public class UiAutomation extends UxPerfUiAutomation {
         int centerX = getUiDevice().getDisplayWidth() / 2;
         int slideIndex = 0;
         String testTag;
-        Timer slideTimer;
+        SurfaceLogger slideLogger;
 
         // scroll forward in edit mode
-        startDumpsys(ACTIVITY_SLIDES);
-        timer = new Timer();
-        timer.start();
+        startLogger("slides_forward");
         while (++slideIndex < slideCount) {
             testTag = "slides_next_" + slideIndex;
-            startDumpsys(ACTIVITY_SLIDES);
-            slideTimer = new Timer();
-            slideTimer.start();
+            slideLogger = new SurfaceLogger(testTag, parameters);
+            slideLogger.start();
             uiDeviceSwipeHorizontal(centerX + centerX/2, centerX - centerX/2,
                                     centerY, DEFAULT_SWIPE_STEPS);
-            slideTimer.end();
-            results.put(testTag, slideTimer);
-            endDumpsys(ACTIVITY_SLIDES, testTag);
+            slideLogger.stop();
+            results.put(testTag, slideLogger.result());
             SystemClock.sleep(SLIDE_WAIT_TIME_MS);
         }
-        timer.end();
-        results.put("slides_forward", timer);
-        endDumpsys(ACTIVITY_SLIDES, "slides_forward");
+        stopLogger("slides_forward");
         sleep(1);
 
         // scroll backward in edit mode
-        startDumpsys(ACTIVITY_SLIDES);
-        timer = new Timer();
-        timer.start();
+        startLogger("slides_reverse");
         while (--slideIndex > 0) {
             testTag = "slides_previous_" + slideIndex;
-            startDumpsys(ACTIVITY_SLIDES);
-            slideTimer = new Timer();
-            slideTimer.start();
+            slideLogger = new SurfaceLogger(testTag, parameters);
+            slideLogger.start();
             uiDeviceSwipeHorizontal(centerX - centerX/2, centerX + centerX/2,
                                     centerY, DEFAULT_SWIPE_STEPS);
-            slideTimer.end();
-            results.put(testTag, slideTimer);
-            endDumpsys(ACTIVITY_SLIDES, testTag);
+            slideLogger.stop();
+            results.put(testTag, slideLogger.result());
             SystemClock.sleep(SLIDE_WAIT_TIME_MS);
         }
-        timer.end();
-        results.put("slides_reverse", timer);
-        endDumpsys(ACTIVITY_SLIDES, "slides_reverse");
+        stopLogger("slides_reverse");
         sleep(1);
 
         // scroll forward in slideshow mode
-        timer = new Timer();
-        timer.start();
+        startLogger("slideshow_open");
         clickUiObject(BY_DESC, "Start slideshow", true);
-        timer.end();
-        results.put("open_slideshow", timer);
+        stopLogger("slideshow_open");
 
-        startDumpsys(ACTIVITY_SLIDES);
-        timer = new Timer();
-        timer.start();
+        startLogger("slideshow_play");
         while (++slideIndex < slideCount) {
             testTag = "slideshow_next_" + slideIndex;
-            startDumpsys(ACTIVITY_SLIDES);
-            slideTimer = new Timer();
-            slideTimer.start();
+            slideLogger = new SurfaceLogger(testTag, parameters);
+            slideLogger.start();
             uiDeviceSwipeHorizontal(centerX + centerX/2, centerX - centerX/2,
                                     centerY, DEFAULT_SWIPE_STEPS);
-            slideTimer.end();
-            results.put(testTag, slideTimer);
-            endDumpsys(ACTIVITY_SLIDES, testTag);
+            slideLogger.stop();
+            results.put(testTag, slideLogger.result());
             SystemClock.sleep(SLIDE_WAIT_TIME_MS);
         }
-        timer.end();
-        results.put("play_slideshow", timer);
-        endDumpsys(ACTIVITY_SLIDES, "play_slideshow");
+        stopLogger("slideshow_play");
         sleep(1);
 
         getUiDevice().pressBack();
@@ -249,15 +210,11 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     protected void testEditNewSlidesDocument(String docName) throws Exception {
-        startDumpsys(ACTIVITY_DOCLIST);
         // create new file
-        timer = new Timer();
-        timer.start();
+        startLogger("create_document");
         clickUiObject(BY_DESC, "New presentation");
         clickUiObject(BY_TEXT, "New PowerPoint", true);
-        timer.end();
-        results.put("create_document", timer);
-        endDumpsys(ACTIVITY_DOCLIST, "create_document");
+        stopLogger("create_document");
 
         // first slide
         enterTextInSlide("Title", "WORKLOAD AUTOMATION");
@@ -277,32 +234,31 @@ public class UiAutomation extends UxPerfUiAutomation {
         getUiDevice().pressBack();
 
         // get image from gallery and insert
-        // To keep the test simple just select the most recent image regardless of what
-        // folder it's in. More reliable than trying to find a pushed image in the file
-        // picker, and fails gracefully in the rare case that no images exist.
         insertSlide("Title Only");
         clickUiObject(BY_DESC, "Insert");
         clickUiObject(BY_TEXT, "Image", true);
         clickUiObject(BY_TEXT, "Recent");
-        try {
-            UiObject image = new UiObject(new UiSelector().resourceId("com.android.documentsui:id/date").instance(2));
-            image.clickAndWaitForNewWindow();
-        } catch (UiObjectNotFoundException e) {
-            clickUiObject(BY_ID, "com.android.documentsui:id/date", true);
-        }
+        clickUiObject(BY_ID, "com.android.documentsui:id/date", true);
 
         // last slide
         insertSlide("Title Slide");
         // insert "?" shape
+        startLogger("shape_insert");
         clickUiObject(BY_DESC, "Insert");
         clickUiObject(BY_TEXT, "Shape");
         clickUiObject(BY_TEXT, "Buttons");
         clickUiObject(BY_DESC, "actionButtonHelp");
-        UiObject resize = getUiObjectByDescription("Bottom-left resize");
-        UiObject shape = getUiObjectByDescription("actionButtonHelp");
+        stopLogger("shape_insert");
+        UiObject resizeHandle = new UiObject(new UiSelector().descriptionMatches(".*Bottom[- ]left resize.*"));
         UiObject subtitle = getUiObjectByDescription("subTitle");
-        resize.dragTo(subtitle, 40);
+        startLogger("shape_resize");
+        resizeHandle.dragTo(subtitle, 40);
+        stopLogger("shape_resize");
+        startLogger("shape_drag");
+        UiObject shape = getUiObjectByDescription("actionButtonHelp");
         shape.dragTo(subtitle, 40);
+        stopLogger("shape_drag");
+        getUiDevice().pressBack();
         enterTextInSlide("title", "THE END. QUESTIONS?");
 
         sleep(1);
@@ -336,21 +292,17 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     public void saveDocument(String docName) throws Exception {
-        timer = new Timer();
-        timer.start();
+        startLogger("save_dialog_1");
         clickUiObject(BY_TEXT, "SAVE");
         clickUiObject(BY_TEXT, "Device");
-        timer.end();
-        results.put("save_dialog_1", timer);
+        stopLogger("save_dialog_1");
 
-        timer = new Timer();
-        timer.start();
+        startLogger("save_dialog_2");
         UiObject filename = getUiObjectByResourceId(PACKAGE_ID + "file_name_edit_text");
         filename.clearTextField();
         filename.setText(docName);
         clickUiObject(BY_TEXT, "Save", CLASS_BUTTON);
-        timer.end();
-        results.put("save_dialog_2", timer);
+        stopLogger("save_dialog_2");
 
         // Overwrite if prompted
         // Should not happen under normal circumstances. But ensures test doesn't stop
@@ -365,16 +317,13 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     public void deleteDocument(String docName) throws Exception {
-        timer = new Timer();
-        timer.start();
+        startLogger("delete_dialog_1");
         UiObject doc = getUiObjectByText(docName);
         doc.longClick();
         clickUiObject(BY_TEXT, "Remove");
-        timer.end();
-        results.put("delete_dialog_1", timer);
+        stopLogger("delete_dialog_1");
 
-        timer = new Timer();
-        timer.start();
+        startLogger("delete_dialog_2");
         UiObject deleteButton;
         try {
             deleteButton = getUiObjectByText("Remove", CLASS_BUTTON);
@@ -382,8 +331,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             deleteButton = getUiObjectByText("Ok", CLASS_BUTTON);
         }
         deleteButton.clickAndWaitForNewWindow();
-        timer.end();
-        results.put("delete_dialog_2", timer);
+        stopLogger("delete_dialog_2");
         sleep(1);
     }
 
@@ -394,17 +342,14 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
     }
 
-    public void startDumpsys(String viewName) throws Exception {
-        if (dumpsysEnabled) {
-            initDumpsysSurfaceFlinger(PACKAGE);
-            initDumpsysGfxInfo(PACKAGE);
-        }
+    protected void startLogger(String name) throws Exception {
+        logger = new SurfaceLogger(name, parameters);
+        logger.start();
     }
 
-    public void endDumpsys(String viewName, String testTag) throws Exception {
-        if (dumpsysEnabled) {
-            exitDumpsysSurfaceFlinger(PACKAGE, new File(outputDir, testTag + "_surfFlinger.log"));
-            exitDumpsysGfxInfo(PACKAGE, new File(outputDir, testTag + "_gfxInfo.log"));
-        }
+    protected void stopLogger(String name) throws Exception {
+        logger.stop();
+        results.put(name, logger.result());
     }
+
 }

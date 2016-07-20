@@ -19,8 +19,9 @@ import re
 import shutil
 from wlauto import AndroidUiAutoBenchmark, Parameter
 from wlauto.utils.types import list_of_strings
+from wlauto.exceptions import WorkloadError
 
-__version__ = '0.1.1'
+__version__ = '0.2.1'
 
 
 class GoogleSlides(AndroidUiAutoBenchmark):
@@ -87,7 +88,14 @@ class GoogleSlides(AndroidUiAutoBenchmark):
                   If ``True``, dumpsys captures will be carried out during the test run.
                   The output is piped to log files which are then pulled from the phone.
                   '''),
-        Parameter('local_file', kind=str,
+        Parameter('test_image', kind=str, mandatory=True, default='1.jpeg',
+                  description='''
+                  An image to be pushed onto the device that will be embedded in the
+                  PowerPoint file as part of the test.
+                  '''),
+        Parameter('use_test_file', kind=bool, default=False,
+                  description='If ``True`` then use a provided test file instead of creating one'),
+        Parameter('test_file', kind=str, default='uxperf_test_doc.pptx',
                   description='''
                   If specified, the workload will push the PowerPoint file to be used for
                   testing on the device. Otherwise, a file will be created inside the app.
@@ -104,38 +112,39 @@ class GoogleSlides(AndroidUiAutoBenchmark):
     def __init__(self, device, **kwargs):
         super(GoogleSlides, self).__init__(device, **kwargs)
         self.run_timeout = 300
-        self.output_file = path.join(self.device.working_directory, self.instrumentation_log)
+        self.output_file = self.device.path.join(self.device.working_directory, self.instrumentation_log)
         self.local_dir = self.dependencies_directory
         # Use Android downloads folder as it is the default folder opened by Google Slides'
-        # file picker, and not WA's working directory. Helps test reliability by avoiding
-        # having to navigate around the filesystem to locate pushed file.
-        self.device_dir = path.join(self.device.working_directory, '..', 'Download')
-        self.wa_test_file = 'wa_test_{}'.format(self.local_file) if self.local_file else None
+        # file picker, and not wa-working directory. Significantly improves test reliability
+        self.device_dir = self.device.path.join(self.device.working_directory, '..', 'Download')
 
     def validate(self):
         super(GoogleSlides, self).validate()
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['results_file'] = self.output_file
-        if self.local_file:
-            self.uiauto_params['local_file'] = self.wa_test_file
-            self.uiauto_params['slide_count'] = self.slide_count
+        self.uiauto_params['package'] = self.package
+        if self.use_test_file:
+            if not self.test_file:
+                raise WorkloadError('Parameter use_test_file is "True" but test_file was not specified')
+            else:
+                self.uiauto_params['test_file'] = self.test_file
+                self.uiauto_params['slide_count'] = self.slide_count
 
     def initialize(self, context):
         super(GoogleSlides, self).initialize(context)
-        self.logger.info('local_dir={}, local_file={}'.format(self.local_dir, self.local_file))
-        self.logger.info('device_dir={}, wa_test_file={}'.format(self.device_dir, self.wa_test_file))
-        if self.local_file:
+        for ff in [self.test_image, self.test_file]:
             # Copy to dependencies folder if necessary
-            if not path.isfile(path.join(self.local_dir, self.local_file)):
-                filepath = path.join(path.dirname(__file__), self.local_file)
+            if ff and not path.isfile(path.join(self.local_dir, ff)):
+                filepath = path.join(path.dirname(__file__), ff)
                 shutil.copy(filepath, self.local_dir)
-            # push local PPT file
-            for entry in os.listdir(self.local_dir):
-                if entry == self.local_file:
-                    self.device.push_file(path.join(self.local_dir, self.local_file),
-                                          path.join(self.device_dir, self.wa_test_file),
-                                          timeout=60)
+        # push local files
+        for entry in os.listdir(self.local_dir):
+            if entry == self.test_file or entry == self.test_image:
+                self.device.push_file(path.join(self.local_dir, entry),
+                                      self.device.path.join(self.device_dir, entry),
+                                      timeout=60)
+        self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
     def update_result(self, context):
         super(GoogleSlides, self).update_result(context)
@@ -147,11 +156,11 @@ class GoogleSlides(AndroidUiAutoBenchmark):
 
     def finalize(self, context):
         super(GoogleSlides, self).finalize(context)
-        if self.local_file:
-            # delete pushed PPT file
-            for entry in self.device.listdir(self.device_dir):
-                if entry == self.wa_test_file:
-                    self.device.delete_file(path.join(self.device_dir, entry))
+        # delete pushed files
+        for entry in self.device.listdir(self.device_dir):
+            if entry == self.test_file or entry == self.test_image:
+                self.device.delete_file(self.device.path.join(self.device_dir, entry))
+        self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
     def get_metrics(self, context):
         self.device.pull_file(self.output_file, context.output_directory)
@@ -171,6 +180,6 @@ class GoogleSlides(AndroidUiAutoBenchmark):
     def pull_logs(self, context):
         wd = self.device.working_directory
         for entry in self.device.listdir(wd):
-            if entry.startswith(self.name) and entry.endswith('.log'):
-                self.device.pull_file(path.join(wd, entry), context.output_directory)
-                self.device.delete_file(path.join(wd, entry))
+            if entry.endswith('.log'):
+                self.device.pull_file(self.device.path.join(wd, entry), context.output_directory)
+                self.device.delete_file(self.device.path.join(wd, entry))
