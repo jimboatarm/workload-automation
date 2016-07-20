@@ -63,6 +63,7 @@ public class UiAutomation extends UxPerfUiAutomation {
     protected String packageName;
     protected String packageID;
     protected String testFile;
+    protected String testImage;
 
     public void runUiAutomation() throws Exception {
         parameters = getParams();
@@ -71,6 +72,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         outputDir = parameters.getString("output_dir");
         packageID = packageName + ":id/";
         testFile = parameters.getString("test_file", "");
+        testImage = parameters.getString("test_image", "");
         setScreenOrientation(ScreenOrientation.NATURAL);
 
         skipWelcomeScreen();
@@ -78,7 +80,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         // Run the main tests
         testCreateDocument("UX-Perf-Word");
         if (Boolean.parseBoolean(parameters.getString("use_test_file"))) {
-            testExistingDocument(testFile);
+            testExistingDocument(testFile, testImage);
         }
         deleteDocuments();
 
@@ -112,7 +114,7 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     public void testCreateDocument(String documentName) throws Exception {
-        newDocument("Newsletter");
+        newDocument("Blank document");
         // Dismiss tooltip if it appears
         startLogger("new_doc_close_tooltip");
         UiObject tooltip = new UiObject(new UiSelector().textContains("Got it").className(CLASS_BUTTON));
@@ -120,6 +122,10 @@ public class UiAutomation extends UxPerfUiAutomation {
             tooltip.click();
         }
         stopLogger("new_doc_close_tooltip");
+
+        // Input a title for manipulation later on
+        UiObject page = getUiObjectByResourceId("com.microsoft.office.word:id/wordAirspaceLayerHost");
+        page.setText("Newsletter Title");
 
         // Rename document
         String titleId = isTablet() ? "DocTitle" : "DocTitlePortrait";
@@ -204,7 +210,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         stopLogger("new_doc_close_file");
     }
 
-    public void testExistingDocument(String documentName) throws Exception {
+    public void testExistingDocument(String documentName, String imageName) throws Exception {
         openDocument(documentName);
         // Dismiss tooltip if it appears
         UiObject tooltip = new UiObject(new UiSelector().textContains("Got it").className(CLASS_BUTTON));
@@ -304,7 +310,9 @@ public class UiAutomation extends UxPerfUiAutomation {
         // Select the first image
         startLogger("insert_image_action");
         if (isTablet()) {
-            clickUiObject(BY_TEXT, ".jpg", true);
+            UiObject jpegImageFile = 
+                new UiObject(new UiSelector().className("android.widget.TextView").text(imageName));
+            jpegImageFile.click();
         } else {
             clickUiObject(BY_ID, "com.android.documentsui:id/date", true);
         }
@@ -388,18 +396,6 @@ public class UiAutomation extends UxPerfUiAutomation {
             moreOptions.click();
             clickUiObject(BY_TEXT, "Remove from list");
             stopLogger("delete_doc_recent_" + count);
-            count++;
-        }
-        // Remove created document from device
-        clickUiObject(BY_TEXT, "Open", CLASS_BUTTON, true);
-        gotoStorageFolder("wa-working");
-        count = 0;
-        while (moreOptions.exists()) {
-            startLogger("delete_doc_device_" + count);
-            moreOptions.click();
-            clickUiObject(BY_TEXT, "Delete", true);
-            clickUiObject(BY_TEXT, "Yes", CLASS_BUTTON);
-            stopLogger("delete_doc_device_" + count);
             count++;
         }
     }
