@@ -81,6 +81,7 @@ public class UiAutomation extends UxPerfUiAutomation {
     public void runUiAutomation() throws Exception {
         parameters = getParams();
         parseParams(parameters);
+        setScreenOrientation(ScreenOrientation.NATURAL);
         skipWelcomeScreen();
         openAndCloseDrawer();
         enablePowerpointCompat();
@@ -88,6 +89,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         if (useLocalFile) {
             testSlideshowFromStorage(localFile);
         }
+        unsetScreenOrientation();
         writeResultsToFile(results, parameters.getString("results_file"));
     }
 
