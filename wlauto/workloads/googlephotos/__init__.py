@@ -16,9 +16,8 @@
 import os
 import re
 
-from wlauto import AndroidUiAutoBenchmark, Parameter
-from wlauto.exceptions import DeviceError
-from wlauto.exceptions import NotFoundError
+from wlauto import AndroidUiAutoBenchmark, Parameter, File
+from wlauto.utils.types import list_of_strings
 
 __version__ = '0.1.1'
 
@@ -52,6 +51,11 @@ class Googlephotos(AndroidUiAutoBenchmark):
        degrees and 270 degrees.
     """
 
+    default_test_images = [
+        'uxperf_1200x1600.png', 'uxperf_1600x1200.jpg',
+        'uxperf_2448x3264.png', 'uxperf_3264x2448.jpg',
+    ]
+
     parameters = [
         Parameter('dumpsys_enabled', kind=bool, default=True,
                   description="""
@@ -59,13 +63,16 @@ class Googlephotos(AndroidUiAutoBenchmark):
                   test run.  The output is piped to log files which are then
                   pulled from the phone.
                   """),
+        Parameter('test_images', kind=list_of_strings, default=default_test_images,
+                  constraint=lambda x: len(x) >= 4,
+                  description='A list of four image files to be pushed to the device.'),
     ]
 
     instrumentation_log = name + '_instrumentation.log'
 
     def __init__(self, device, **kwargs):
         super(Googlephotos, self).__init__(device, **kwargs)
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.output_file = self.path_on_device(self.instrumentation_log)
 
     def validate(self):
         super(Googlephotos, self).validate()
@@ -77,17 +84,10 @@ class Googlephotos(AndroidUiAutoBenchmark):
     def initialize(self, context):
         super(Googlephotos, self).initialize(context)
 
-        # Check for workload dependencies before proceeding
-        jpeg_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(('.jpg', '.jpeg'))]
-
-        if len(jpeg_files) < 4:
-            raise NotFoundError("This workload requires a minimum of four {} files in {}".format('jpe?g',
-                                self.dependencies_directory))
-        else:
-            for entry in jpeg_files:
-                self.device.push_file(os.path.join(self.dependencies_directory, entry),
-                                      os.path.join(self.device.working_directory, entry),
-                                      timeout=300)
+        for ff in self.test_images:
+            fpath = context.resolver.get(File(self, ff))
+            fname = os.path.basename(fpath)  # Ensures correct behaviour in case params are absolute paths
+            self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
 
         # Force a re-index of the mediaserver cache to pick up new files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
@@ -118,12 +118,12 @@ class Googlephotos(AndroidUiAutoBenchmark):
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.endswith(".log"):
-                self.device.pull_file(os.path.join(self.device.working_directory, entry),
+                self.device.pull_file(self.path_on_device(entry),
                                       context.output_directory)
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
             # Clean up edited files on each iteration
             if regex.search(entry):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
 
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
@@ -131,8 +131,12 @@ class Googlephotos(AndroidUiAutoBenchmark):
         super(Googlephotos, self).finalize(context)
 
         for entry in self.device.listdir(self.device.working_directory):
-            if entry.lower().endswith(('.jpg', '.jpeg')):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+            if entry.lower() in self.test_images:
+                self.device.delete_file(self.path_on_device(entry))
 
         # Force a re-index of the mediaserver cache to removed cached files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
+
+    # Absolute path of the file inside WA working directory
+    def path_on_device(self, name):
+        return self.device.path.join(self.device.working_directory, name)

@@ -15,10 +15,8 @@
 
 import os
 import re
-import shutil
 
-from wlauto import AndroidUiAutoBenchmark, Parameter
-from wlauto.exceptions import NotFoundError
+from wlauto import AndroidUiAutoBenchmark, Parameter, File
 
 __version__ = '0.1.0'
 
@@ -84,7 +82,7 @@ class Excel(AndroidUiAutoBenchmark):
 
     def __init__(self, device, **kwargs):
         super(Excel, self).__init__(device, **kwargs)
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.output_file = self.path_on_device(self.instrumentation_log)
 
     def validate(self):
         super(Excel, self).validate()
@@ -94,20 +92,13 @@ class Excel(AndroidUiAutoBenchmark):
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
         self.uiauto_params['use_test_file'] = self.use_test_file
 
-    def push_test_file(self, filename):
-        if not os.path.isfile(os.path.join(self.dependencies_directory, filename)):
-            filepath = os.path.join(os.path.dirname(__file__), filename)
-            shutil.copy(filepath, self.dependencies_directory)
-
-        self.device.push_file(os.path.join(self.dependencies_directory, filename),
-                              os.path.join(self.device.working_directory, filename),
-                              timeout=300)
-
     def setup(self, context):
         super(Excel, self).setup(context)
 
         if self.use_test_file:
-            self.push_test_file("wa_test.xlsx")
+            fname = "uxperf_test_doc.xlsx"
+            fpath = context.resolver.get(File(self, fname))
+            self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
 
     def update_result(self, context):
         super(Excel, self).update_result(context)
@@ -133,10 +124,14 @@ class Excel(AndroidUiAutoBenchmark):
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.endswith(".log"):
-                self.device.pull_file(os.path.join(self.device.working_directory, entry),
+                self.device.pull_file(self.path_on_device(entry),
                                       context.output_directory)
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
 
             # Clean up Excel files on each iteration
             if entry.endswith(".xlsx"):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
+
+    # Absolute path of the file inside WA working directory
+    def path_on_device(self, name):
+        return self.device.path.join(self.device.working_directory, name)

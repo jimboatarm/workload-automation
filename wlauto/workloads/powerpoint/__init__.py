@@ -16,9 +16,7 @@
 import os
 import re
 
-from wlauto import AndroidUiAutoBenchmark, Parameter
-from wlauto.exceptions import DeviceError
-from wlauto.exceptions import NotFoundError
+from wlauto import AndroidUiAutoBenchmark, Parameter, File
 
 __version__ = '0.1.1'
 
@@ -86,6 +84,10 @@ class Powerpoint(AndroidUiAutoBenchmark):
                   The title to use when creating a new presentation.
                   Note: spaces must be replaced with underscores in the title name.
                   """),
+        Parameter('test_image', kind=str, mandatory=False, default='uxperf_1600x1200.jpg',
+                  description="""
+                  Image to be embedded in the ``test_file`` document.
+                  """),
         Parameter('use_test_file', kind=bool, default=False,
                   description="""
                   If ``True``, pushes a preconfigured test file to the device
@@ -112,7 +114,7 @@ class Powerpoint(AndroidUiAutoBenchmark):
 
     def __init__(self, device, **kwargs):
         super(Powerpoint, self).__init__(device, **kwargs)
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.output_file = self.path_on_device(self.instrumentation_log)
 
     def validate(self):
         super(Powerpoint, self).validate()
@@ -131,27 +133,18 @@ class Powerpoint(AndroidUiAutoBenchmark):
         else:
             self.uiauto_params['slide_template'] = 'Blank_presentation'
 
-    def push_file(self, extension):
-        entrys = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(extension)]
-
-        # Check for workload dependencies before proceeding
-        if len(entrys) != 1:
-            raise NotFoundError("This workload requires one {} file in {}".format(extension,
-                                self.dependencies_directory))
-        else:
-            for entry in entrys:
-                self.device.push_file(os.path.join(self.dependencies_directory, entry),
-                                      os.path.join(self.device.working_directory, entry),
-                                      timeout=300)
-
     def setup(self, context):
         super(Powerpoint, self).setup(context)
 
-        # push file types to device
-        self.push_file(('.jpg', '.jpeg'))
+        # push test files to device
+        fpath = context.resolver.get(File(self, self.test_image))
+        fname = os.path.basename(fpath)
+        self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
 
         if self.use_test_file:
-            self.push_file(".pptx")
+            fpath = context.resolver.get(File(self, self.test_file))
+            fname = os.path.basename(fpath)  # Ensures correct behaviour in case params are absolute paths
+            self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
 
         # Force a re-index of the mediaserver cache to pick up new files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
@@ -182,13 +175,12 @@ class Powerpoint(AndroidUiAutoBenchmark):
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.endswith(".log"):
-                self.device.pull_file(os.path.join(self.device.working_directory, entry),
-                                      context.output_directory)
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.pull_file(self.path_on_device(entry), context.output_directory)
+                self.device.delete_file(self.path_on_device(entry))
 
             # Clean up powerpoint file from 'create' test on each iteration
             if regex.search(entry):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
 
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
@@ -197,7 +189,11 @@ class Powerpoint(AndroidUiAutoBenchmark):
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.lower().endswith(('.jpg', '.jpeg', '.pptx')):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
 
         # Force a re-index of the mediaserver cache to removed cached files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
+
+    # Absolute path of the file inside WA working directory
+    def path_on_device(self, name):
+        return self.device.path.join(self.device.working_directory, name)
