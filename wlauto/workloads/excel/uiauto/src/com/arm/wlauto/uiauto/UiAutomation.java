@@ -53,7 +53,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         // Create simple workbook
         // ----------------------------------------------------------------
         newFile();
-        newWorkbook();
+        // newWorkbook();
         selectBlankWorkbook();
         dismissToolTip();
         createTable();
@@ -67,7 +67,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             openWorkbook("wa_test.xlsx");
             dismissToolTip();
             calculateCells();
-            copyColumn();
+            // copyColumn();
             searchTable("4");
             gesturesTest();
         }
@@ -184,7 +184,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             pressDPadRight();
         }
 
-        formatHeader();
+        // formatHeader();
         resetColumnPosition(nColumns);
 
         // Create the rows

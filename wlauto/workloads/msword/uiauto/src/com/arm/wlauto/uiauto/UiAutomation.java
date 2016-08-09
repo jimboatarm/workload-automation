@@ -82,7 +82,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         if (Boolean.parseBoolean(parameters.getString("use_test_file"))) {
             testExistingDocument(testFile, testImage);
         }
-        deleteDocuments();
+        // deleteDocuments();
 
         unsetScreenOrientation();
         writeResultsToFile(results, parameters.getString("output_file"));
@@ -162,6 +162,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         stopLogger("format_font_style");
 
         // Font size
+        /*
         startLogger("format_font_size_menu");
         UiObject fontSizeBox = new UiObject(
             new UiSelector().resourceId(packageID + "fsComboBoxButton").instance(1));
@@ -196,6 +197,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             getUiDevice().waitForIdle();
             getUiDevice().pressBack();
         }
+        */
 
         // Close file
         startLogger("new_doc_app_menu");
@@ -227,6 +229,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             stopLogger("scroll_down_" + i);
         }
 
+        /*
         // Insert shape
         UiSelector menuItems = new UiSelector().resourceId(packageID + "TabWidgetContent");
         if (isTablet()) {
@@ -333,6 +336,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         if (!isTablet()) {
             clickUiObject(BY_ID, packageID + "CommandPaletteHandle");
         }
+        */
 
         // Scroll up the document
         for (int i = 0; i < SCROLL_SWIPE_COUNT; i++) {
@@ -360,6 +364,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         clickUiObject(BY_TEXT, "New", true);
         stopLogger("new_doc_action");
 
+        /*
         // Save in WA working folder
         clickUiObject(BY_ID, packageID + "docsui_LocationListSplitButton");
         clickUiObject(BY_TEXT, "Select", CLASS_TEXT_VIEW, true);
@@ -369,6 +374,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         if (setDefault.exists()) {
             setDefault.click();
         }
+        */
 
         // Wait until templates have been downloaded (checks the first template)
         UiObject templates = new UiObject(new UiSelector().textContains("Take Notes"));

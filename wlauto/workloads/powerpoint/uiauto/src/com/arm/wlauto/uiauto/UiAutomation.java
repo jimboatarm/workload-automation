@@ -52,13 +52,14 @@ public class UiAutomation extends UxPerfUiAutomation {
         // ----------------------------------------------------------------
         // Create presentation from template
         // ----------------------------------------------------------------
-        newPresentation();
+        newFile();
+        // newPresentation();
         selectTemplate(templateName);
         dismissToolTip();
         editTitle(titleText);
         clickNewSlide();
-        setSlideLayout();
-        addImage();
+        // setSlideLayout();
+        // addImage();
         clickThumbNail(0); // go back to first slide before presenting
         presentSlides(2, "None");
 
@@ -73,7 +74,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             String testFile = parameters.getString("test_file");
             openPresentation(testFile);
             dismissToolTip();
-            setTransitionEffect(transitionEffect);
+            // setTransitionEffect(transitionEffect);
             presentSlides(numberOfSlides, transitionEffect);
         }
 
@@ -87,13 +88,15 @@ public class UiAutomation extends UxPerfUiAutomation {
         skipSignIn.click();
     }
 
-    private void newPresentation() throws Exception {
+    private void newFile() throws Exception {
         UiObject newButton = new UiObject(new UiSelector().className("android.widget.Button").text("New"));
 
         if (newButton.exists()) {
             newButton.click();
         }
+    }
 
+    private void newPresentation() throws Exception {
         UiObject docLocation =
             getUiObjectByText("This device > Documents", "android.widget.ToggleButton");
         docLocation.click();
@@ -425,8 +428,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         UiObject commandPalettePhone =
             new UiObject(new UiSelector().resourceId("com.microsoft.office.powerpoint:id/CommandPaletteHandle"));
-        
-        UiObject transitionTabTablet = 
+
+        UiObject transitionTabTablet =
             new UiObject(new UiSelector().className("android.widget.TextView").text("Transitions"));
 
         if (transitionTabTablet.exists()) {
