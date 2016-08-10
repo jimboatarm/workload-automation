@@ -490,7 +490,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         for (int i = 0; i < numberOfSlides; ++i) {
             logger.start();
-            uiDeviceSwipeLeft(20);
+            UiObject view = getUiObjectByResourceId("com.microsoft.office.powerpoint:id/mediaElementContainer");
+            uiObjectSwipe(view, Direction.LEFT, 20);
             logger.stop();
             sleep(5); // allow time for the transition animation to complete
             timingResults.put(runName + "_" + i, logger.result());
