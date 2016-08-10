@@ -107,7 +107,7 @@ public class UiAutomation extends UxPerfUiAutomation {
     public void setToField(final Bundle parameters) throws Exception {
         Timer result = new Timer();
         UiObject toField = getUiObjectByText("To", "android.widget.TextView");
-        String recipient = parameters.getString("recipient").replace('_', ' ');
+        String recipient = parameters.getString("recipient");
         result.start();
         toField.setText(recipient);
         getUiDevice().getInstance().pressEnter();
@@ -155,9 +155,9 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject attachIcon = getUiObjectByResourceId("com.google.android.gm:id/add_attachment",
                                                       "android.widget.TextView");
 
-        String[] imageFiles = {"1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg"};
+        int imageFiles = Integer.parseInt(parameters.getString("number_of_images"));
 
-        for ( int i = 0; i < imageFiles.length; i++) {
+        for ( int i = 0; i < imageFiles; i++) {
 
             SurfaceLogger logger = new SurfaceLogger(testTag + "_" + (i + 1), parameters);
             logger.start();
@@ -215,9 +215,7 @@ public class UiAutomation extends UxPerfUiAutomation {
 
             logger.stop();
 
-            // Replace whitespace and full stops within the filename
-            String file = imageFiles[i].replaceAll("\\.", "_").replaceAll("\\s+", "_");
-            timingResults.put(String.format("AttachFiles" + "_" + file), logger.result());
+            timingResults.put("AttachFiles_" + (i + 1), logger.result());
         }
     }
 }

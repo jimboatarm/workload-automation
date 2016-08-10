@@ -14,13 +14,10 @@
 #
 
 import os
-import logging
 import re
-import time
 
-from wlauto import AndroidUiAutoBenchmark, Parameter
-from wlauto.exceptions import DeviceError
-from wlauto.exceptions import NotFoundError
+from wlauto import AndroidUiAutoBenchmark, Parameter, File
+from wlauto.utils.types import list_of_strings
 
 __version__ = '0.1.1'
 
@@ -48,7 +45,10 @@ class Gmail(AndroidUiAutoBenchmark):
     7. Click the Send mail button
     """
 
-    regex = re.compile(r'uxperf_gmail.*: (?P<key>\w+) (?P<value>\d+)')
+    default_test_images = [
+        'uxperf_1200x1600.png', 'uxperf_1600x1200.jpg',
+        'uxperf_2448x3264.png', 'uxperf_3264x2448.jpg',
+    ]
 
     parameters = [
         Parameter('recipient', kind=str, mandatory=True,
@@ -62,6 +62,12 @@ class Gmail(AndroidUiAutoBenchmark):
                   test run.  The output is piped to log files which are then
                   pulled from the phone.
                   """),
+        Parameter('test_images', kind=list_of_strings, default=default_test_images,
+                  constraint=lambda x: len(x) >= 4,
+                  description="""
+                  A list of four image files to be pushed to the device.
+                  These will be attached to an email as part of the test.
+                  """),
     ]
 
     instrumentation_log = name + '_instrumentation.log'
@@ -69,7 +75,7 @@ class Gmail(AndroidUiAutoBenchmark):
     def __init__(self, device, **kwargs):
         super(Gmail, self).__init__(device, **kwargs)
         self.uiauto_params['recipient'] = self.recipient
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.output_file = self.path_on_device(self.instrumentation_log)
 
     def validate(self):
         super(Gmail, self).validate()
@@ -77,6 +83,7 @@ class Gmail(AndroidUiAutoBenchmark):
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
+        self.uiauto_params['number_of_images'] = len(self.test_images)
 
     def initialize(self, context):
         super(Gmail, self).initialize(context)
@@ -86,16 +93,10 @@ class Gmail(AndroidUiAutoBenchmark):
             raise DeviceError('Network is not connected for device {}'.format(self.device.name))
 
         # Check for workload dependencies before proceeding
-        jpeg_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(('.jpg', '.jpeg'))]
-
-        if len(jpeg_files) < 5:
-            raise NotFoundError("This workload requires a minimum of five {} files in {}".format('jpe?g',
-                                self.dependencies_directory))
-        else:
-            for entry in jpeg_files:
-                self.device.push_file(os.path.join(self.dependencies_directory, entry),
-                                      os.path.join(self.device.working_directory, entry),
-                                      timeout=300)
+        for ff in self.test_images:
+            fpath = context.resolver.get(File(self, ff))
+            fname = os.path.basename(fpath)  # Ensures correct behaviour in case params are absolute paths
+            self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
 
         # Force a re-index of the mediaserver cache to pick up new files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
@@ -123,15 +124,19 @@ class Gmail(AndroidUiAutoBenchmark):
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.endswith(".log"):
-                self.device.pull_file(os.path.join(self.device.working_directory, entry), context.output_directory)
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.pull_file(self.path_on_device(entry), context.output_directory)
+                self.device.delete_file(self.path_on_device(entry))
 
     def finalize(self, context):
         super(Gmail, self).finalize(context)
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.lower().endswith(('.jpg', '.jpeg')):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
 
         # Force a re-index of the mediaserver cache to pick up new files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
+
+    # Absolute path of the file inside WA working directory
+    def path_on_device(self, name):
+        return self.device.path.join(self.device.working_directory, name)

@@ -15,12 +15,8 @@
 
 import os
 import re
-import shutil
 
-from wlauto import AndroidUiAutoBenchmark, Parameter
-from wlauto.exceptions import WorkloadError
-from wlauto.exceptions import NotFoundError
-
+from wlauto import AndroidUiAutoBenchmark, Parameter, File
 
 __version__ = '0.1.1'
 
@@ -89,7 +85,7 @@ class MsWord(AndroidUiAutoBenchmark):
                   Filename to push to the device for testing
                   Note: spaces must be replaced with underscores in the test_file name.
                   """),
-        Parameter('test_image', kind=str, mandatory=False, default='1.jpeg',
+        Parameter('test_image', kind=str, mandatory=False, default='uxperf_1600x1200.jpg',
                   description="""
                   Image to be embedded in the ``test_file`` document.
                   Only applicable if ``use_test_file`` is true.
@@ -101,7 +97,7 @@ class MsWord(AndroidUiAutoBenchmark):
     def __init__(self, device, **kwargs):
         super(MsWord, self).__init__(device, **kwargs)
         self.run_timeout = 300
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.output_file = self.path_on_device(self.instrumentation_log)
 
     def validate(self):
         super(MsWord, self).validate()
@@ -117,30 +113,15 @@ class MsWord(AndroidUiAutoBenchmark):
     def setup(self, context):
         super(MsWord, self).setup(context)
 
-        # push file types to device
+        # push test files to device
         if self.use_test_file:
-            docfile = False
-            imgfile = False
-            for entry in os.listdir(self.dependencies_directory):
-                if entry.lower() == self.test_file.lower():
-                    self.device.push_file(os.path.join(self.dependencies_directory, entry),
-                                          os.path.join(self.device.working_directory, entry),
-                                          timeout=300)
-                    docfile = True
-                if entry.lower() == self.test_image.lower():
-                    self.device.push_file(os.path.join(self.dependencies_directory, entry),
-                                          os.path.join(self.device.working_directory, entry),
-                                          timeout=300)
-                    imgfile = True
-            if not docfile:
-                raise NotFoundError("Could not find test_file {} in {}".format(self.test_file,
-                                    self.dependencies_directory))
-            if not imgfile:
-                raise NotFoundError("Could not find test_image {} in {}".format(self.test_image,
-                                    self.dependencies_directory))
+            for ff in (self.test_file, self.test_image):
+                fpath = context.resolver.get(File(self, ff))
+                fname = os.path.basename(ff)  # Ensures correct behaviour in case params are absolute paths
+                self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
 
-        # Force a re-index of the mediaserver cache to pick up new files
-        self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
+            # Force a re-index of the mediaserver cache to pick up new files
+            self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
     def update_result(self, context):
         super(MsWord, self).update_result(context)
@@ -168,12 +149,12 @@ class MsWord(AndroidUiAutoBenchmark):
         # pull logs
         for entry in self.device.listdir(self.device.working_directory):
             if entry.endswith('.log'):
-                self.device.pull_file(os.path.join(self.device.working_directory, entry), context.output_directory)
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.pull_file(self.path_on_device(entry), context.output_directory)
+                self.device.delete_file(self.path_on_device(entry))
 
             # Clean up document file from 'create' test on each iteration
             if regex.search(entry):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
 
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
@@ -182,7 +163,11 @@ class MsWord(AndroidUiAutoBenchmark):
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.lower() in (self.test_file.lower(), self.test_image.lower()):
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.delete_file(self.path_on_device(entry))
 
         # Force a re-index of the mediaserver cache to removed cached files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
+
+    # Absolute path of the file inside WA working directory
+    def path_on_device(self, name):
+        return self.device.path.join(self.device.working_directory, name)

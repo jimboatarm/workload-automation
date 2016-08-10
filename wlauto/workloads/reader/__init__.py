@@ -14,13 +14,9 @@
 #
 
 import os
-import logging
 import re
-import time
 
-from wlauto import AndroidUiAutoBenchmark, Parameter
-from wlauto.exceptions import DeviceError
-from wlauto.exceptions import NotFoundError
+from wlauto import AndroidUiAutoBenchmark, Parameter, File
 
 __version__ = '0.1.1'
 
@@ -93,9 +89,9 @@ class Reader(AndroidUiAutoBenchmark):
 
     def __init__(self, device, **kwargs):
         super(Reader, self).__init__(device, **kwargs)
-        self.output_file = os.path.join(self.device.working_directory, self.instrumentation_log)
+        self.output_file = self.path_on_device(self.instrumentation_log)
         self.reader_local_dir = self.device.path.join(self.device.external_storage_directory,
-                                                      'Android/data/com.adobe.reader/files/')
+                                                      'Android', 'data', 'com.adobe.reader', 'files')
 
     def validate(self):
         super(Reader, self).validate()
@@ -103,23 +99,16 @@ class Reader(AndroidUiAutoBenchmark):
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
-        self.uiauto_params['filename'] = self.document_name.replace(' ', '_')
+        self.uiauto_params['filename'] = self.document_name
         self.uiauto_params['first_search_string'] = self.first_search_string.replace(' ', '_')
         self.uiauto_params['second_search_string'] = self.second_search_string.replace(' ', '_')
 
     def setup(self, context):
         super(Reader, self).setup(context)
 
-        # Check for workload dependencies before proceeding
-        pdf_files = [entry for entry in os.listdir(self.dependencies_directory) if entry.lower().endswith(".pdf")]
-
-        if not len(pdf_files):
-            raise NotFoundError("Cannot find {} file(s) in {}".format('pdf', self.dependencies_directory))
-        else:
-            for entry in pdf_files:
-                self.device.push_file(os.path.join(self.dependencies_directory, entry),
-                                      os.path.join(self.reader_local_dir, entry),
-                                      timeout=300)
+        fpath = context.resolver.get(File(self, self.document_name))
+        fname = os.path.basename(fpath)  # Ensures correct behaviour in case params are absolute paths
+        self.device.push_file(fpath, self.device.path.join(self.reader_local_dir, fname), timeout=300)
 
     def update_result(self, context):
         super(Reader, self).update_result(context)
@@ -144,9 +133,14 @@ class Reader(AndroidUiAutoBenchmark):
 
         for entry in self.device.listdir(self.device.working_directory):
             if entry.endswith(".log"):
-                self.device.pull_file(os.path.join(self.device.working_directory, entry), context.output_directory)
-                self.device.delete_file(os.path.join(self.device.working_directory, entry))
+                self.device.pull_file(self.path_on_device(entry),
+                                      context.output_directory)
+                self.device.delete_file(self.path_on_device(entry))
 
         for entry in self.device.listdir(self.reader_local_dir):
             if entry.lower().endswith('.pdf'):
-                self.device.delete_file(os.path.join(self.reader_local_dir, entry))
+                self.device.delete_file(self.device.path.join(self.reader_local_dir, entry))
+
+    # Absolute path of the file inside WA working directory
+    def path_on_device(self, name):
+        return self.device.path.join(self.device.working_directory, name)
