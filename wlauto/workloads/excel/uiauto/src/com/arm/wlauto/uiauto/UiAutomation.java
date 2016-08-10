@@ -64,7 +64,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         // Load test workbook
         // ----------------------------------------------------------------
         if (Boolean.parseBoolean(parameters.getString("use_test_file"))) {
-            openWorkbook("wa_test.xlsx");
+            String testFile = parameters.getString("test_file");
+            openWorkbook(testFile);
             dismissToolTip();
             calculateCells();
             // copyColumn();

@@ -83,6 +83,7 @@ class Excel(AndroidUiAutoBenchmark):
     def __init__(self, device, **kwargs):
         super(Excel, self).__init__(device, **kwargs)
         self.output_file = self.path_on_device(self.instrumentation_log)
+        self.test_file = "uxperf_test_doc.xlsx"
 
     def validate(self):
         super(Excel, self).validate()
@@ -91,14 +92,14 @@ class Excel(AndroidUiAutoBenchmark):
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
         self.uiauto_params['use_test_file'] = self.use_test_file
+        self.uiauto_params['test_file'] = self.test_file
 
     def setup(self, context):
         super(Excel, self).setup(context)
 
         if self.use_test_file:
-            fname = "uxperf_test_doc.xlsx"
-            fpath = context.resolver.get(File(self, fname))
-            self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
+            fpath = context.resolver.get(File(self, self.test_file))
+            self.device.push_file(fpath, self.path_on_device(self.test_file), timeout=300)
 
     def update_result(self, context):
         super(Excel, self).update_result(context)
