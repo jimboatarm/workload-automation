@@ -106,7 +106,7 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     public void setToField(final Bundle parameters) throws Exception {
         Timer result = new Timer();
-        UiObject toField = getUiObjectByText("To", "android.widget.TextView");
+        UiObject toField = getUiObjectByResourceId("com.google.android.gm:id/to_heading");
         String recipient = parameters.getString("recipient");
         result.start();
         toField.setText(recipient);

@@ -201,10 +201,15 @@ public class UiAutomation extends UxPerfUiAutomation {
     private void gesturesTest() throws Exception {
         String testTag = "gestures";
 
+        tapDisplayCentre();
+        sleep(1);
+
         // Perform a range of swipe tests while browsing home photoplaybooks gallery
         LinkedHashMap<String, GestureTestParams> testParams = new LinkedHashMap<String, GestureTestParams>();
-        testParams.put("swipe_left", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.LEFT, 20));
-        testParams.put("swipe_right", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.RIGHT, 20));
+        // testParams.put("swipe_left", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.LEFT, 20));
+        testParams.put("swipe_left", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.LEFT, 20));
+        // testParams.put("swipe_right", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.RIGHT, 20));
+        testParams.put("swipe_right", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.RIGHT, 20));
         testParams.put("pinch_out", new GestureTestParams(GestureType.PINCH, PinchType.OUT, 100, 50));
         testParams.put("pinch_in", new GestureTestParams(GestureType.PINCH, PinchType.IN, 100, 50));
 
@@ -317,6 +322,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         Timer result = new Timer();
         result.start();
 
+        tapDisplayCentre();
+
         UiObject clickable = new UiObject(new UiSelector().longClickable(true));
         uiObjectPerformLongClick(clickable, 100);
 
@@ -403,7 +410,7 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         String testTag = "switch_page_style";
 
-        getDropdownMenu();
+        // getDropdownMenu();
         UiObject readerSettings = getUiObjectByResourceId("com.google.android.apps.books:id/menu_reader_settings",
                                                           "android.widget.TextView");
         readerSettings.click();
@@ -472,9 +479,10 @@ public class UiAutomation extends UxPerfUiAutomation {
     // Helper for accessing the drop down menu
     private void getDropdownMenu() throws Exception {
         sleep(1); // Allow previous views to settle
-        int height = getDisplayHeight();
-        int width = getDisplayCentreWidth();
-        getUiDevice().swipe(width, 20, width, height / 10, 50);
+        tapDisplayCentre();
+        // int height = getDisplayHeight();
+        // int width = getDisplayCentreWidth();
+        // getUiDevice().swipe(width, 20, width, height / 10, 50);
     }
 
     // Helper for returning common UiObject page view
