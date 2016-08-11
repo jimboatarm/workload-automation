@@ -129,6 +129,6 @@ class Skype(AndroidUiAutoBenchmark):
         # Pull log files
         wd = self.device.working_directory
         for entry in self.device.listdir(wd):
-            if entry.startswith(self.name) and entry.endswith(".log"):
+            if entry.endswith(".log"):
                 self.device.pull_file(op.join(wd, entry), context.output_directory)
                 self.device.delete_file(op.join(wd, entry))
