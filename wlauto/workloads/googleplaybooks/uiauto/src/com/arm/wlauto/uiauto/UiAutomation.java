@@ -325,7 +325,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         tapDisplayCentre();
 
         UiObject clickable = new UiObject(new UiSelector().longClickable(true));
-        uiObjectPerformLongClick(clickable, 100);
+        uiObjectPerformLongClick(clickable, 200);
 
         UiObject addNoteButton = new UiObject(
                 new UiSelector().resourceId("com.google.android.apps.books:id/add_note_button"));
