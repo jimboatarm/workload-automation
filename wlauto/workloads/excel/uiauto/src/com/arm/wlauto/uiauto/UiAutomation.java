@@ -79,7 +79,10 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     private void skipSignInView() throws Exception {
-        UiObject skipSignIn = getUiObjectByText("Skip", "android.widget.TextView");
+        // On some devices the skip button takes time to appear so wait
+        // before throwing an exception
+        long skipSignInTimeout = TimeUnit.SECONDS.toMillis(15);
+        UiObject skipSignIn = getUiObjectByText("Skip", "android.widget.TextView", skipSignInTimeout);
         skipSignIn.click();
     }
 
