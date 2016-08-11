@@ -174,8 +174,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         // Perform a range of swipe tests at different speeds and on different views
         LinkedHashMap<String, GestureTestParams> testParams = new LinkedHashMap<String, GestureTestParams>();
-        testParams.put("swipe_down", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.DOWN, 200));
-        testParams.put("swipe_up", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.UP, 200));
+        testParams.put("swipe_down", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.DOWN, 200));
+        testParams.put("swipe_up", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.UP, 200));
         testParams.put("swipe_right", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.RIGHT, 50));
         testParams.put("swipe_left", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.LEFT, 50));
         testParams.put("pinch_out", new GestureTestParams(GestureType.PINCH, PinchType.OUT, 100, 50));
@@ -183,11 +183,19 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         Iterator<Entry<String, GestureTestParams>> it = testParams.entrySet().iterator();
 
+        // First time around the localButton is not recognised and instead it
+        // clicks on the first file in the recents list. Do this first before
+        // proceeding with the normal workflow.
+        UiObject localButton = getUiObjectByText("LOCAL", "android.widget.TextView");
+        localButton.click();
+        pressBack();
+
         openFile(filename);
 
         // On some devices the first device swipe is ignored so perform it here
         // to prevent the first test gesture from being incorrectly logged
-        uiDeviceSwipe(Direction.DOWN, 200);
+        // uiDeviceSwipe(Direction.DOWN, 200);
+        tapDisplayCentre();
 
         UiObject view = new UiObject(new UiSelector().resourceId("com.adobe.reader:id/pageView"));
 
