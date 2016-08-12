@@ -83,6 +83,9 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject doNotSignInButton =
             new UiObject(new UiSelector().resourceId("com.google.android.apps.photos:id/dont_sign_in_button"));
 
+        // Folder containing test images (early check required)
+        UiObject workingFolder = new UiObject(new UiSelector().text("wa-working"));
+
         if (doNotSignInButton.exists()) {
             doNotSignInButton.click();
         } else {
@@ -95,14 +98,19 @@ public class UiAutomation extends UxPerfUiAutomation {
                 getUiObjectByText("Use without an account", "android.widget.TextView");
             useWithoutAccount.clickAndWaitForNewWindow();
 
-            // Dismiss welcome views promoting app features
-            sleep(1);
-            uiDeviceSwipeLeft(10);
-            sleep(1);
-            uiDeviceSwipeLeft(10);
-            sleep(1);
-            uiDeviceSwipeLeft(10);
-            sleep(1);
+            // On some devices the welcome views don't always appear so check
+            // for the existence of the wa-working directory before attempting
+            // any device swipses
+            if (!workingFolder.exists()) {
+                // Dismiss welcome views promoting app features
+                sleep(1);
+                uiDeviceSwipeLeft(10);
+                sleep(1);
+                uiDeviceSwipeLeft(10);
+                sleep(1);
+                uiDeviceSwipeLeft(10);
+                sleep(1);
+            }
         }
 
         UiObject nextButton =
@@ -113,7 +121,6 @@ public class UiAutomation extends UxPerfUiAutomation {
             nextButton.clickAndWaitForNewWindow();
         }
 
-        UiObject workingFolder = new UiObject(new UiSelector().text("wa-working"));
         waitObject(workingFolder, viewTimeoutSecs);
     }
 
