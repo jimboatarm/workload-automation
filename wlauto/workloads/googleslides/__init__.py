@@ -109,7 +109,7 @@ class GoogleSlides(AndroidUiAutoBenchmark):
 
     def __init__(self, device, **kwargs):
         super(GoogleSlides, self).__init__(device, **kwargs)
-        self.run_timeout = 300
+        self.run_timeout = 600
         self.output_file = self.path_on_device(self.instrumentation_log)
         self.local_dir = self.dependencies_directory
         # Use Android downloads folder as it is the default folder opened by Google Slides'
@@ -133,13 +133,19 @@ class GoogleSlides(AndroidUiAutoBenchmark):
         super(GoogleSlides, self).initialize(context)
         # push test files to device
         if self.use_test_file:
-            for ff in (self.test_image, self.test_file):
-                fpath = context.resolver.get(File(self, ff))
-                fname = os.path.basename(ff)  # Ensures correct behaviour in case params are absolute paths
-                self.device.push_file(fpath, self.device.path.join(self.device_dir, fname), timeout=300)
+            fpath = context.resolver.get(File(self, self.test_file))
+            fname = os.path.basename(self.test_file)  # Ensures correct behaviour in case params are absolute paths
+            self.device.push_file(fpath, self.device.path.join(self.device_dir, fname), timeout=300)
 
-            # Force a re-index of the mediaserver cache to pick up new files
-            self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
+        # Image is always pushed
+        fpath = context.resolver.get(File(self, self.test_image))
+        fname = os.path.basename(self.test_image)  # Ensures correct behaviour in case params are absolute paths
+        self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
+
+    def setup(self, context):
+        super(GoogleSlides, self).setup(context)
+        # Force a re-index of the mediaserver cache to pick up new files
+        self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
     def update_result(self, context):
         super(GoogleSlides, self).update_result(context)
@@ -148,6 +154,8 @@ class GoogleSlides(AndroidUiAutoBenchmark):
     def teardown(self, context):
         super(GoogleSlides, self).teardown(context)
         self.pull_logs(context)
+        # Force a re-index of the mediaserver cache to pick up new files
+        self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')
 
     def finalize(self, context):
         super(GoogleSlides, self).finalize(context)
