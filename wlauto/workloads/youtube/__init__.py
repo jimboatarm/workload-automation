@@ -120,7 +120,6 @@ class Youtube(AndroidUiAutoBenchmark):
     def teardown(self, context):
         super(Youtube, self).teardown(context)
         for entry in self.device.listdir(self.device.working_directory):
-            if entry.startswith(self.name) and entry.endswith(".log"):
-                self.logger.debug("Pulling file '{}'".format(entry))
+            if entry.endswith(".log"):
                 self.device.pull_file(os.path.join(self.device.working_directory, entry), context.output_directory)
                 self.device.delete_file(os.path.join(self.device.working_directory, entry))
