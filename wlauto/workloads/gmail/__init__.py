@@ -19,7 +19,7 @@ import re
 from wlauto import AndroidUiAutoBenchmark, Parameter, File
 from wlauto.utils.types import list_of_strings
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 class Gmail(AndroidUiAutoBenchmark):
@@ -41,14 +41,9 @@ class Gmail(AndroidUiAutoBenchmark):
     3. Enter recipient details in the To: field
     4. Enter text in the Subject edit box
     5. Enter text in the Compose edit box
-    6. Attach five images from the local Images folder to the email
+    6. Attach a single image from the local Images folder to the email
     7. Click the Send mail button
     """
-
-    default_test_images = [
-        'uxperf_1200x1600.png', 'uxperf_1600x1200.jpg',
-        'uxperf_2448x3264.png', 'uxperf_3264x2448.jpg',
-    ]
 
     parameters = [
         Parameter('recipient', kind=str, mandatory=True,
@@ -62,11 +57,10 @@ class Gmail(AndroidUiAutoBenchmark):
                   test run.  The output is piped to log files which are then
                   pulled from the phone.
                   """),
-        Parameter('test_images', kind=list_of_strings, default=default_test_images,
-                  constraint=lambda x: len(x) >= 4,
+        Parameter('test_image', kind=str, default='uxperf_2448x3264.png',
                   description="""
-                  A list of four image files to be pushed to the device.
-                  These will be attached to an email as part of the test.
+                  A single image file to be pushed to the device.
+                  This will be attached to an email as part of the test.
                   """),
     ]
 
@@ -83,7 +77,6 @@ class Gmail(AndroidUiAutoBenchmark):
         self.uiauto_params['output_dir'] = self.device.working_directory
         self.uiauto_params['output_file'] = self.output_file
         self.uiauto_params['dumpsys_enabled'] = self.dumpsys_enabled
-        self.uiauto_params['number_of_images'] = len(self.test_images)
 
     def initialize(self, context):
         super(Gmail, self).initialize(context)
@@ -93,10 +86,9 @@ class Gmail(AndroidUiAutoBenchmark):
             raise DeviceError('Network is not connected for device {}'.format(self.device.name))
 
         # Check for workload dependencies before proceeding
-        for ff in self.test_images:
-            fpath = context.resolver.get(File(self, ff))
-            fname = os.path.basename(fpath)  # Ensures correct behaviour in case params are absolute paths
-            self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
+        fpath = context.resolver.get(File(self, self.test_image))
+        fname = os.path.basename(fpath)  # Ensures correct behaviour in case params are absolute paths
+        self.device.push_file(fpath, self.path_on_device(fname), timeout=300)
 
         # Force a re-index of the mediaserver cache to pick up new files
         self.device.execute('am broadcast -a android.intent.action.MEDIA_MOUNTED -d file:///sdcard')

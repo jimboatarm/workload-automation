@@ -21,6 +21,7 @@ import android.os.Bundle;
 import com.android.uiautomator.core.UiObject;
 import com.android.uiautomator.core.UiObjectNotFoundException;
 import com.android.uiautomator.core.UiSelector;
+import com.android.uiautomator.core.UiScrollable;
 
 import com.arm.wlauto.uiauto.UxPerfUiAutomation;
 
@@ -42,12 +43,13 @@ public class UiAutomation extends UxPerfUiAutomation {
         setScreenOrientation(ScreenOrientation.NATURAL);
 
         clearFirstRunDialogues();
+        disableSyncGmail();
 
         clickNewMail();
+        attachFiles();
         setToField(parameters);
         setSubjectField();
         setComposeField();
-        attachFiles();
         clickSendButton();
 
         writeResultsToFile(timingResults, parameters.getString("output_file"));
@@ -75,6 +77,47 @@ public class UiAutomation extends UxPerfUiAutomation {
             syncNowButton.clickAndWaitForNewWindow(uiAutoTimeout);
             sleep(10);
         }
+    }
+
+    public void disableSyncGmail() throws Exception {
+        UiObject navigationDrawer = getUiObjectByDescription("Open navigation drawer");
+        navigationDrawer.click();
+
+        UiScrollable drawer = new UiScrollable(new UiSelector().resourceId("com.google.android.gm:id/drawer")
+                                               .childSelector(new UiSelector().className("android.widget.ListView")));
+
+        UiObject settings = new UiObject(new UiSelector().text("Settings"));
+
+        while (!settings.exists()) {
+            drawer.swipeUp(10);
+        }
+
+        settings.click();
+
+        UiObject account = getUiObjectByText("armuxperf@gmail.com", "android.widget.TextView");
+        account.click();
+
+        UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+
+        UiObject syncGmail = getUiObjectByText("Sync Gmail", "android.widget.TextView");
+
+        while (!syncGmail.exists()) {
+            scrollable.swipeUp(10);
+        }
+
+        UiObject syncGmailCheckBox = new UiObject(new UiSelector().className("android.widget.ListView")
+                                         .childSelector(new UiSelector().index(7)
+                                         .childSelector(new UiSelector().index(1)
+                                         .childSelector(new UiSelector().index(0)))));
+
+        if (syncGmailCheckBox.isChecked()) {
+            syncGmailCheckBox.click();
+        }
+
+        // return to main screen
+        pressBack();
+        pressBack();
+        pressBack();
     }
 
     public void clickNewMail() throws Exception {
@@ -150,72 +193,67 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     public void attachFiles() throws Exception {
 
-        String testTag = "attach_files";
+        String testTag = "attach_file";
 
         UiObject attachIcon = getUiObjectByResourceId("com.google.android.gm:id/add_attachment",
                                                       "android.widget.TextView");
 
-        int imageFiles = Integer.parseInt(parameters.getString("number_of_images"));
+        SurfaceLogger logger = new SurfaceLogger(testTag, parameters);
+        logger.start();
 
-        for ( int i = 0; i < imageFiles; i++) {
+        attachIcon.click();
+        UiObject attachFile = getUiObjectByText("Attach file", "android.widget.TextView");
+        attachFile.clickAndWaitForNewWindow(uiAutoTimeout);
 
-            SurfaceLogger logger = new SurfaceLogger(testTag + "_" + (i + 1), parameters);
-            logger.start();
+        UiObject titleIsWaWorking = new UiObject(new UiSelector()
+                                            .className("android.widget.TextView")
+                                            .textContains("wa-working"));
+        UiObject titleIsImages = new UiObject(new UiSelector()
+                                            .className("android.widget.TextView")
+                                            .textContains("Images"));
+        UiObject frameLayout = new UiObject(new UiSelector()
+                                            .className("android.widget.FrameLayout")
+                                            .resourceId("android:id/action_bar_container"));
+        UiObject rootMenu = new UiObject(new UiSelector()
+                                            .className("android.widget.ImageButton")
+                                            .descriptionContains("Show roots"));
+        UiObject imagesEntry = new UiObject(new UiSelector()
+                                            .className("android.widget.TextView")
+                                            .textContains("Images"));
+        UiObject waFolder =  new UiObject(new UiSelector()
+                                            .className("android.widget.TextView")
+                                            .textContains("wa-working"));
 
-            attachIcon.click();
-            UiObject attachFile = getUiObjectByText("Attach file", "android.widget.TextView");
-            attachFile.clickAndWaitForNewWindow(uiAutoTimeout);
-
-            UiObject titleIsWaWorking = new UiObject(new UiSelector()
-                                                .className("android.widget.TextView")
-                                                .textContains("wa-working"));
-            UiObject titleIsImages = new UiObject(new UiSelector()
-                                                .className("android.widget.TextView")
-                                                .textContains("Images"));
-            UiObject frameLayout = new UiObject(new UiSelector()
-                                                .className("android.widget.FrameLayout")
-                                                .resourceId("android:id/action_bar_container"));
-            UiObject rootMenu = new UiObject(new UiSelector()
-                                                .className("android.widget.ImageButton")
-                                                .descriptionContains("Show roots"));
-            UiObject imagesEntry = new UiObject(new UiSelector()
-                                                .className("android.widget.TextView")
-                                                .textContains("Images"));
-            UiObject waFolder =  new UiObject(new UiSelector()
-                                                .className("android.widget.TextView")
-                                                .textContains("wa-working"));
-
-            // Some devices use a FrameLayout as oppoised to a view Group so treat them differently
-            if (frameLayout.exists()) {
+        // Some devices use a FrameLayout as oppoised to a view Group so treat them differently
+        if (frameLayout.exists()) {
+            imagesEntry.click();
+            waitObject(titleIsImages, 4);
+            waFolder.click();
+            waitObject(titleIsWaWorking, 4);
+        } else {
+            // Portrait devices will roll the menu up so click the root menu icon
+            if (!titleIsWaWorking.exists()) {
+                if (rootMenu.exists()) {
+                   rootMenu.click();
+                }
                 imagesEntry.click();
                 waitObject(titleIsImages, 4);
+                waitObject(waFolder, 10);
                 waFolder.click();
                 waitObject(titleIsWaWorking, 4);
-            } else {
-                // Portrait devices will roll the menu up so click the root menu icon
-                if (!titleIsWaWorking.exists()) {
-                    if (rootMenu.exists()) {
-                       rootMenu.click();
-                    }
-                    imagesEntry.click();
-                    waitObject(titleIsImages, 4);
-                    waitObject(waFolder, 10);
-                    waFolder.click();
-                    waitObject(titleIsWaWorking, 4);
-                }
             }
-
-            UiObject imageFileButton = new UiObject(new UiSelector()
-                                                .resourceId("com.android.documentsui:id/grid")
-                                                .className("android.widget.GridView")
-                                                .childSelector(new UiSelector()
-                                                .index(i).className("android.widget.FrameLayout")));
-            imageFileButton.click();
-            imageFileButton.waitUntilGone(uiAutoTimeout);
-
-            logger.stop();
-
-            timingResults.put("AttachFiles_" + (i + 1), logger.result());
         }
+
+        UiObject imageFileButton = new UiObject(new UiSelector()
+                                            .resourceId("com.android.documentsui:id/grid")
+                                            .className("android.widget.GridView")
+                                            .childSelector(new UiSelector()
+                                            .index(0).className("android.widget.FrameLayout")));
+        imageFileButton.click();
+        imageFileButton.waitUntilGone(uiAutoTimeout);
+
+        logger.stop();
+
+        timingResults.put("AttachFile", logger.result());
     }
 }
