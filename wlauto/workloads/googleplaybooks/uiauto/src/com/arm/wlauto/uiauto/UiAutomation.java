@@ -54,13 +54,14 @@ public class UiAutomation extends UxPerfUiAutomation {
         clearFirstRunDialogues();
         dismissSync();
 
-        openMyLibrary();
-        searchForBook(bookTitle);
-        selectFirstPage();
-
-        UiWatcher pageSyncPopUpWatcher = createPopUpWatcher();
+        UiWatcher pageSyncPopUpWatcher = createPageSyncPopUpWatcher();
         registerWatcher("pageSyncPopUp", pageSyncPopUpWatcher);
         runWatchers();
+
+        openMyLibrary();
+        openBook(bookTitle);
+        // searchForBook(bookTitle);
+        selectFirstPage();
 
         gesturesTest();
         selectChapter(chapterPagenum);
@@ -79,7 +80,7 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     // Creates a watcher for when a pop up warning appears when pages are out
     // of sync across multiple devices.
-    private UiWatcher createPopUpWatcher() throws Exception {
+    private UiWatcher createPageSyncPopUpWatcher() throws Exception {
         UiWatcher pageSyncPopUpWatcher = new UiWatcher() {
 
             @Override
@@ -155,6 +156,16 @@ public class UiAutomation extends UxPerfUiAutomation {
         timingResults.put("open_library", result);
     }
 
+    private void openBook(final String text) throws Exception {
+        UiObject bookTitle = getUiObjectByText(text, "android.widget.TextView");
+        bookTitle.click();
+
+        if (!getPageView().waitForExists(viewTimeout)) {
+            throw new UiObjectNotFoundException("Could not find \"page view\".");
+        }
+    }
+
+    /*
     private void searchForBook(final String text) throws Exception {
         Timer result = new Timer();
         result.start();
@@ -191,12 +202,12 @@ public class UiAutomation extends UxPerfUiAutomation {
             UiObject read = getUiObjectByText("READ", "android.widget.Button");
             read.click();
         }
-        
+
         if (!getPageView().waitForExists(viewTimeout)) {
             throw new UiObjectNotFoundException("Could not find \"page view\".");
         }
     }
-
+    */
 
     private void gesturesTest() throws Exception {
         String testTag = "gestures";
@@ -280,6 +291,29 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     private void selectFirstPage() throws Exception {
+
+        // Depending on the time of day the night light feature pop-up dialog
+        // may be displayed. Check for its presence and dismiss.
+        UiObject dismissText =
+            new UiObject(new UiSelector().resourceId("com.google.android.apps.books:id/nl_dismiss"));
+
+        if (dismissText.waitForExists(viewTimeout)) {
+            try {
+                dismissText.click();
+            } catch (UiObjectNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            dismissText.waitUntilGone(viewTimeout);
+
+            // on chrome books after dismissing the pop-up two key
+            // presses are need before interacting with the app
+            tapDisplayCentre();
+            sleep(1);
+            tapDisplayCentre();
+            sleep(1);
+        }
+
         getDropdownMenu();
 
         UiObject contents = getUiObjectByResourceId("com.google.android.apps.books:id/menu_reader_toc",
@@ -478,7 +512,7 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     // Helper for accessing the drop down menu
     private void getDropdownMenu() throws Exception {
-        sleep(1); // Allow previous views to settle
+        sleep(3); // Allow previous views to settle
         tapDisplayCentre();
         // int height = getDisplayHeight();
         // int width = getDisplayCentreWidth();
