@@ -117,7 +117,6 @@ public class UiAutomation extends UxPerfUiAutomation {
         // return to main screen
         pressBack();
         pressBack();
-        pressBack();
     }
 
     public void clickNewMail() throws Exception {
