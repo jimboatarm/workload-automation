@@ -19,7 +19,7 @@ import re
 from wlauto import AndroidUiAutoBenchmark, Parameter, File
 from wlauto.exceptions import WorkloadError
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 
 class GoogleSlides(AndroidUiAutoBenchmark):
