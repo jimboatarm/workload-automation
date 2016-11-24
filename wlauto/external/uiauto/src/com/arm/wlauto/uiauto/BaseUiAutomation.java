@@ -145,8 +145,10 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
         public void launch_main() throws Exception{
             Process launch_p;
             Process stop_app;
+            sleep(10);
             stop_app = Runtime.getRuntime().exec(String.format("am force-stop %s",
                                 packageName));
+            stop_app.waitFor();
             logger.start();
             if(activityName.equals("None")) {
                 launch_p = Runtime.getRuntime().exec(String.format("am start -W %s",
@@ -159,6 +161,7 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
                 Log.d("Launched with activity", activityName);
             }
 
+            launch_p.waitFor();
             launch_validate(launch_p);
             stop_app.destroy();
             launch_p.destroy();

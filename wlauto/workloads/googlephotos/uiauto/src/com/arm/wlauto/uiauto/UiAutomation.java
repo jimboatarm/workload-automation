@@ -60,10 +60,6 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject userBeginObject =
             new UiObject(new UiSelector().textContains("Photos")
                                          .className("android.widget.TextView"));
-        //Watcher that takes care of backup popup during warm start
-        UiWatcher backupPopUpWatcher = createBackupPopUpWatcher();
-        registerWatcher("backupPopUpWatcher", backupPopUpWatcher);
-        runWatchers();
         
 
         setScreenOrientation(ScreenOrientation.NATURAL);
@@ -75,8 +71,13 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
         
         if(applaunch_enabled) {
-            applaunch.launch_end(userBeginObject,5);//mark the end of launch
+            applaunch.launch_end(userBeginObject,10);//mark the end of launch
         }
+
+        //Watcher that takes care of backup popup during warm start
+        UiWatcher backupPopUpWatcher = createBackupPopUpWatcher();
+        registerWatcher("backupPopUpWatcher", backupPopUpWatcher);
+        runWatchers();
 
         selectWorkingGallery("wa-1");
         gesturesTest();
@@ -474,7 +475,7 @@ public class UiAutomation extends UxPerfUiAutomation {
                         e.printStackTrace();
                     }
 
-                    return closeButton.waitUntilGone(TimeUnit.SECONDS.toMillis(10));
+                    return closeButton.waitUntilGone(TimeUnit.SECONDS.toMillis(60));
                 }
                 return false;
             }
