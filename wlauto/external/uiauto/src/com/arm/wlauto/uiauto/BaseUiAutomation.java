@@ -169,11 +169,11 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
         public void launch_main(String actionName, String dataURI) throws Exception{
             Process launch_p;
             Process stop_app;
-            sleep(2);
             stop_app = Runtime.getRuntime().exec(String.format("am force-stop %s",
                                 packageName));
             logger.start();
             stop_app.waitFor();
+            sleep(5);
             launch_p = Runtime.getRuntime().exec(String.format("am start -W -a %s -d %s",
                                 actionName, dataURI));
 

@@ -65,7 +65,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         setScreenOrientation(ScreenOrientation.NATURAL);
         dismissWelcomeView();
         closePromotionPopUp();
-        
+        sleep(5);
         if(applaunch_enabled) {
             applaunch.launch_main();//launch the application
         }

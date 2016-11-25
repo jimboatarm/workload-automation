@@ -83,7 +83,7 @@ public class UiAutomation extends UxPerfUiAutomation {
             applaunch.launch_main();//launch the application
         }
         if(applaunch_enabled) {
-            applaunch.launch_end(userBeginObject,5);//mark the end of launch
+            applaunch.launch_end(userBeginObject,10);//mark the end of launch
         }
 
         searchForBook(searchBookTitle);

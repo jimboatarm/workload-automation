@@ -77,6 +77,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         // Run tests
         handleLoginScreen(loginName, loginPass);
         dismissUpdatePopupIfPresent();
+        sleep(5);
         if(applaunch_enabled) {
             applaunch.launch_main(actionName,dataURI);//launch the application
         }
