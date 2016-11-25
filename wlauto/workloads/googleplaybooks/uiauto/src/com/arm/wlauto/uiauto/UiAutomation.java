@@ -78,7 +78,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         clearFirstRunDialogues();
         dismissSendBooksAsGiftsDialog();
         dismissSync();
-
+        sleep(5);
         if(applaunch_enabled) {
             applaunch.launch_main();//launch the application
         }

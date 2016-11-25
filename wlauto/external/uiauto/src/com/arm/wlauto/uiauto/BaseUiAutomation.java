@@ -145,7 +145,6 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
         public void launch_main() throws Exception{
             Process launch_p;
             Process stop_app;
-            sleep(10);
             stop_app = Runtime.getRuntime().exec(String.format("am force-stop %s",
                                 packageName));
             stop_app.waitFor();
