@@ -662,7 +662,9 @@ class AndroidApplaunchWorkload(AndroidUiAutoBenchmark):
     
     def __init__(self, device, **kwargs):
         super(AndroidApplaunchWorkload, self).__init__(device, **kwargs)
-        self.AndroidBenchmark.setup(context)
+
+    def initialize(self,context):
+        AndroidBenchmark.setup(context)
         self.uiautomethod = 'clearDialogues'
         self.UiAutomatorWorkload.setup(context)
 
