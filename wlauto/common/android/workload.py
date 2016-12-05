@@ -658,11 +658,6 @@ class AndroidApplaunchWorkload(AndroidUiAutoBenchmark):
                   If ``True``, UX_PERF action markers will be emitted to logcat during
                   the test run.
                   """),
-        Parameter('applaunch_type', kind=str, default='warm',
-                  description='''
-                  If equals warm, will measure the warm start time of the application and if equals cold,
-                  will measure the cold start time of the application.
-                  '''),
     ]
     
     def __init__(self, device, **kwargs):
@@ -676,7 +671,6 @@ class AndroidApplaunchWorkload(AndroidUiAutoBenchmark):
         super(AndroidApplaunchWorkload, self).validate()
         self.uiauto_params['package'] = self.package
         self.uiauto_params['markers_enabled'] = self.markers_enabled
-        self.uiauto_params['applaunch_type'] = self.applaunch_type
         if not self.activity:
             self.uiauto_params['launch_activity'] = "None"
         else:
