@@ -79,15 +79,20 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     public void runClearDialogues() throws Exception {
-        sleep(5);
+        parameters = getParams();
+        packageName = parameters.getString("package");
+        packageID = packageName + ":id/";
+        sleep(10);
         setScreenOrientation(ScreenOrientation.NATURAL);
         dismissWelcomeView();
         closePromotionPopUp();
+        unsetScreenOrientation();
     }
     
     public void runApplaunchIteration() throws Exception {
         parameters = getParams();
         packageName = parameters.getString("package");
+        packageID = packageName + ":id/";
         activityName = parameters.getString("launch_activity");
         applaunchType = parameters.getString("applaunch_type");
         //Applaunch object for launching an application and measuring the time taken

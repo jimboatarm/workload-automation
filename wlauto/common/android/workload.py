@@ -146,7 +146,7 @@ class ApkWorkload(Workload):
                   is provided at the run phase).
     :install_timeout: Timeout for the installation of the APK. This may vary wildly based on
                       the size and nature of a specific APK, and so should be defined on
-                      per-workload basis.
+                        per-workload basis.
 
                       .. note:: To a lesser extent, this will also vary based on the the
                                 device and the nature of adb connection (USB vs Ethernet),

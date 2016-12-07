@@ -17,7 +17,7 @@ import os
 
 from time import sleep
 
-from wlauto.common.android.workload import AndroidUiAutoBenchmark
+from wlauto import Workload, AndroidBenchmark, UiAutomatorWorkload
 from wlauto import Parameter
 from wlauto import ExtensionLoader
 from wlauto import File
@@ -25,7 +25,7 @@ from wlauto.exceptions import ConfigError
 from wlauto.utils.android import ApkInfo
 
 
-class UxperfApplaunch(AndroidUiAutoBenchmark):
+class UxperfApplaunch(Workload):
     name = 'uxperfapplaunch'
     description = '''
     Installs and runs a .apk file, waits wait_time_seconds, and tests if the app
@@ -49,15 +49,15 @@ class UxperfApplaunch(AndroidUiAutoBenchmark):
         loader =  ExtensionLoader()
         self.workload = loader.get_workload(self.workload_name, device, **self.workload_params)
 
-    def init_resources(self,context):
-        AndroidUiAutoBenchmark.init_resources(self.workload, context)
+    def validate(self):
+        self.workload.validate()
+        self.workload.uiauto_params['package'] = self.workload.package
+        self.workload.uiauto_params['activity'] = self.workload.activity
+        self.workload.uiauto_params['markers_enabled'] = self.workload.markers_enabled
+        self.workload.uiauto_params['applaunch_type'] = self.applaunch_type
 
-    def validate(self, device, **kwargs):
-        super(UxperfApplaunch, self).validate()
-        self.uiauto_params['package'] = self.workload.package
-        self.uiauto_params['activity'] = self.workload.activity
-        self.uiauto_params['markers_enabled'] = self.markers_enabled
-        self.uiauto_params['applaunch_type'] = self.applaunch_type
+    def init_resources(self, context):
+        self.workload.init_resources(context)
 
     def setup(self, context):
         AndroidBenchmark.setup(self.workload,context)
@@ -65,22 +65,32 @@ class UxperfApplaunch(AndroidUiAutoBenchmark):
     def applaunch_stop(self, context):
         if self.applaunch_type == 'cold':
             self.device.execute('am force-stop {}'.format(self.workload.package))
+
+    def kill_bg_processes(self, context):
         self.device.execute('am kill-all')  # kill all *background* activities
+
+    def clear_logcat(self, context):
         self.device.clear_logcat()
 
     def run(self, context):
-        self.uiauto_method = "runClearDialogues"
+        self.workload.uiauto_method = "runClearDialogues"
         UiAutomatorWorkload.setup(self.workload, context)
         UiAutomatorWorkload.run(self.workload, context)
-        self.applaunch_stop(self, context)
-        self.uiauto_method = "runApplaunchIteration"
+        applaunch_stop(self.workload, context)
+        self.workload.uiauto_method = "runApplaunchIteration"
         #Run iterations of applaunch test
         for i in xrange(self.iterations):
             UiAutomatorWorkload.setup(self.workload, context)
+            kill_bg_processes(self.workload,context)
             UiAutomatorWorkload.run(self.workload, context)
-            self.applaunch_stop(self, context)
+            AndroidBenchmark.update_result(self.workload,context)
+            clear_logcat(self.workload,context)
+            applaunch_stop(self.workload, context)
 
-
+    def teardown(self,context):
+        UiAutomatorWorkload.teardown(self.workload, context)
+        AndroidBenchmark.teardown(self.workload, context)
+        
 
 
 
