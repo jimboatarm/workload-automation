@@ -40,6 +40,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     public Bundle parameters;
     public String packageName;
+    public String activityName;
+    public String applaunchType;
     public String packageID;
 
     private long viewTimeout =  TimeUnit.SECONDS.toMillis(10);
@@ -47,12 +49,11 @@ public class UiAutomation extends UxPerfUiAutomation {
     public void runUiAutomation() throws Exception {
         parameters = getParams();
         packageName = parameters.getString("package");
+        activityName = parameters.getString("launch_activity");
+        applaunchType = parameters.getString("applaunch_type");
         packageID = packageName + ":id/";
-
-        sleep(5); // Pause while splash screen loads
-        setScreenOrientation(ScreenOrientation.NATURAL);
-        dismissWelcomeView();
-        closePromotionPopUp();
+        
+        runClearDialogues();
 
         selectGalleryFolder("wa-1");
         selectFirstImage();
@@ -87,6 +88,19 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
     
     public void runApplaunchIteration() throws Exception {
+        //Applaunch object for launching an application and measuring the time taken
+        AppLaunch applaunch = new AppLaunch(packageName, activityName, parameters);
+        //Widget on the screen that marks the application ready for user interaction
+        UiObject userBeginObject =
+            new UiObject(new UiSelector().textContains("Photos")
+                                         .className("android.widget.TextView"));
+        
+        applaunch.startLaunch();//Launch the appl;ication and start timer 
+        applaunch.endLaunch(userBeginObject,10);//marks the end of launch and stops timer
+        if (self.applaunch_type.equals("warm")) {
+            pressHome();
+        }
+
     }
 
     public void dismissWelcomeView() throws Exception {
