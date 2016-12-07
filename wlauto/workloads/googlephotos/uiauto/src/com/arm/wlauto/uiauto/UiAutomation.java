@@ -79,6 +79,16 @@ public class UiAutomation extends UxPerfUiAutomation {
         unsetScreenOrientation();
     }
 
+    public void runClearDialogues() throws Exception {
+        sleep(5);
+        setScreenOrientation(ScreenOrientation.NATURAL);
+        dismissWelcomeView();
+        closePromotionPopUp();
+    }
+    
+    public void runApplaunchIteration() throws Exception {
+    }
+
     public void dismissWelcomeView() throws Exception {
         // Click through the first two pages and make sure that we don't sign
         // in to our google account. This ensures the same set of photographs

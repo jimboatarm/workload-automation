@@ -647,44 +647,6 @@ class AndroidUxPerfWorkload(AndroidUiAutoBenchmark):
         if self.clean_assets:
             self.delete_assets()
 
-class AndroidApplaunchWorkload(AndroidUiAutoBenchmark):
-    """
-    Base class to measure applaunch time for all workloads that rely on a UI Automator JAR file.
-
-    """
-    parameters = [
-        Parameter('markers_enabled', kind=bool, default=False,
-                  description="""
-                  If ``True``, UX_PERF action markers will be emitted to logcat during
-                  the test run.
-                  """),
-    ]
-    
-    def __init__(self, device, **kwargs):
-        super(AndroidApplaunchWorkload, self).__init__(device, **kwargs)
-
-    def initialize(self,context):
-        AndroidBenchmark.setup(context)
-        self.uiautomethod = 'clearDialogues'
-        self.UiAutomatorWorkload.setup(context)
-
-    
-    def validate(self):
-        super(AndroidApplaunchWorkload, self).validate()
-        self.uiauto_params['package'] = self.package
-        self.uiauto_params['markers_enabled'] = self.markers_enabled
-        if not self.activity:
-            self.uiauto_params['launch_activity'] = "None"
-        else:
-            self.uiauto_params['launch_activity'] = self.activity
-    
-    def setup(self):
-        self.uiautomethod = 'measureApplaunchTime'
-        self.UiAutomatorWorkload.setup(context)
-
-    def teardown(self, context):
-        self.UiAutomatorWorkload.teardown(context)
-
 class GameWorkload(ApkWorkload, ReventWorkload):
     """
     GameWorkload is the base class for all the workload that use revent files to
