@@ -17,8 +17,9 @@ import os
 
 from time import sleep
 
-from wlauto.common.android.workload import AndroidApplaunchWorkload
+from wlauto.common.android.workload import AndroidUiAutoBenchmark
 from wlauto import Parameter
+from wlauto import ExtensionLoader
 from wlauto import File
 from wlauto.exceptions import ConfigError
 from wlauto.utils.android import ApkInfo
@@ -33,6 +34,11 @@ class UxperfApplaunch(AndroidUiAutoBenchmark):
     supported_platforms = ['android']
 
     parameters = [
+        Parameter('workload_params', kind=dict, default=False,
+                  description="""
+                  If ``True``, UX_PERF action markers will be emitted to logcat during
+                  the test run.
+                  """),
         Parameter('workload_name', kind=str, description='Name of the application package to launch', mandatory=True),
         Parameter('applaunch_type', kind=str, default='warm',
                   description='Choose cold for cold start time or warm for warm start time'),
@@ -41,7 +47,7 @@ class UxperfApplaunch(AndroidUiAutoBenchmark):
     def __init__(self, device, **kwargs):
         super(UxperfApplaunch, self).__init__(device, **kwargs)
         loader =  ExtensionLoader()
-        self.workload = loader.get_workload(self.workload_name, device, **kwargs)
+        self.workload = loader.get_workload(self.workload_name, device, **self.workload_params)
 
     def init_resources(self,context):
         AndroidUiAutoBenchmark.init_resources(self.workload, context)
@@ -49,6 +55,7 @@ class UxperfApplaunch(AndroidUiAutoBenchmark):
     def validate(self, device, **kwargs):
         super(UxperfApplaunch, self).validate()
         self.uiauto_params['package'] = self.workload.package
+        self.uiauto_params['activity'] = self.workload.activity
         self.uiauto_params['markers_enabled'] = self.markers_enabled
         self.uiauto_params['applaunch_type'] = self.applaunch_type
 

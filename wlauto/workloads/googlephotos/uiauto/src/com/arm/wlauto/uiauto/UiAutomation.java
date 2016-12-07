@@ -49,8 +49,6 @@ public class UiAutomation extends UxPerfUiAutomation {
     public void runUiAutomation() throws Exception {
         parameters = getParams();
         packageName = parameters.getString("package");
-        activityName = parameters.getString("launch_activity");
-        applaunchType = parameters.getString("applaunch_type");
         packageID = packageName + ":id/";
         
         runClearDialogues();
@@ -88,6 +86,10 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
     
     public void runApplaunchIteration() throws Exception {
+        parameters = getParams();
+        packageName = parameters.getString("package");
+        activityName = parameters.getString("launch_activity");
+        applaunchType = parameters.getString("applaunch_type");
         //Applaunch object for launching an application and measuring the time taken
         AppLaunch applaunch = new AppLaunch(packageName, activityName, parameters);
         //Widget on the screen that marks the application ready for user interaction
@@ -97,7 +99,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         
         applaunch.startLaunch();//Launch the appl;ication and start timer 
         applaunch.endLaunch(userBeginObject,10);//marks the end of launch and stops timer
-        if (self.applaunch_type.equals("warm")) {
+        if (applaunchType.equals("warm")) {
             pressHome();
         }
 
