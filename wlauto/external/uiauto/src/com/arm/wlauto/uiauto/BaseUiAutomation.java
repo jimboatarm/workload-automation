@@ -99,6 +99,86 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
             }
         }
     }
+    /*
+     * AppLaunch class implements methods that facilitates launching applications from the uiautomator.
+     * ActionLogger class is instantiated within the class for measuring applaunch time.
+     * launchMain(): starts the application launch.
+     * launchEnd(UiObject,int): marks the end of application launch, to measure the correct applaunch end time.
+     *         @param Uiobject: is a workload specific object to search in the screen that potentially marks the beginning of user interaction.
+     *         @param int: speficies the number of seconds to wait for the object to appear on screen, throws Uiobject not found exception.
+    */
+    public class AppLaunch {
+
+        private String packageName;
+        private String activityName;
+        public String testTag = "applaunch";
+        public Bundle parameters;
+        public ActionLogger logger;
+        Process launch_p;
+
+        public AppLaunch(String packageName,
+                String activityName, 
+                Bundle parameters) {
+            this.packageName = packageName;
+            this.activityName = activityName;
+            this.parameters = parameters;
+            this.logger = new ActionLogger(testTag, parameters);
+        }
+
+        //Called by launchMain() to check if app launch is successful
+        public void launchValidate(Process launch_p) throws Exception {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(launch_p.getInputStream()));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Error:")) {
+                    throw new Exception("Application could not be launched");
+                }
+            }
+        }
+
+        //Marks the end of applaunch of the workload.
+        public void endLaunch(UiObject launch_end_resource, int launch_timeout) throws Exception{
+            waitObject(launch_end_resource, launch_timeout);
+            logger.stop();
+            launch_p.destroy();
+        }
+
+
+        //Launches the application.
+        public void launchMain() throws Exception{
+            if(activityName.equals("None")) {
+                launch_p = Runtime.getRuntime().exec(String.format("am start -W %s",
+                                packageName));
+            }
+            else {
+                launch_p = Runtime.getRuntime().exec(String.format("am start -W -n %s/%s",
+                                packageName, activityName));
+            }
+
+            launch_p.waitFor();
+            launchValidate(launch_p);
+        }
+        //Launches the Skype application
+        public void launchMain(String actionName, String dataURI) throws Exception{
+            launch_p = Runtime.getRuntime().exec(String.format("am start -W -a %s -d %s",
+                                actionName, dataURI));
+
+            launch_p.waitFor();
+            launchValidate(launch_p);
+        }
+        
+        //Beginning of application launch for Skype
+        public void startLaunch(String actionName, String dataURI) throws Exception{
+            logger.start();
+            launchMain(actionName, dataURI);
+        }
+        
+        //Beginning of application launch
+        public void startLaunch() throws Exception{
+            logger.start();
+            launchMain();
+        }
+    }
 
     public void sleep(int second) {
         super.sleep(second * 1000);
@@ -226,6 +306,10 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
 
     public void pressEnter() {
         UiDevice.getInstance().pressEnter();
+    }
+
+    public void pressHome() {
+        UiDevice.getInstance().pressHome();
     }
 
     public void pressBack() {
@@ -573,46 +657,5 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
            throw new UiObjectNotFoundException("Could not find view with text: " + text);
         }
         return object;
-    }
-
-    // Helper to select a folder in the gallery
-    public void selectGalleryFolder(String directory) throws Exception {
-        UiObject workdir =
-            new UiObject(new UiSelector().text(directory)
-                                         .className("android.widget.TextView"));
-        UiScrollable scrollView =
-            new UiScrollable(new UiSelector().scrollable(true));
-
-        // If the folder is not present wait for a short time for
-        // the media server to refresh its index.
-        boolean discovered = workdir.waitForExists(TimeUnit.SECONDS.toMillis(10));
-        if (!discovered && scrollView.exists()) {
-            // First check if the directory is visible on the first
-            // screen and if not scroll to the bottom of the screen to look for it.
-            discovered = scrollView.scrollIntoView(workdir);
-
-            // If still not discovered scroll back to the top of the screen and
-            // wait for a longer amount of time for the media server to refresh
-            // its index.
-            if (!discovered) {
-                // scrollView.scrollToBeggining() doesn't work for this
-                // particular scrollable view so use device method instead
-                for (int i = 0; i < 10; i++) {
-                    uiDeviceSwipeUp(20);
-                }
-                discovered = workdir.waitForExists(TimeUnit.SECONDS.toMillis(60));
-
-                // Scroll to the bottom of the screen one last time
-                if (!discovered) {
-                    discovered = scrollView.scrollIntoView(workdir);
-                }
-            }
-        }
-
-        if (discovered) {
-            workdir.clickAndWaitForNewWindow();
-        } else {
-            throw new UiObjectNotFoundException("Could not find folder : " + directory);
-        }
     }
 }
