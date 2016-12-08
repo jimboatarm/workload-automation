@@ -42,6 +42,8 @@ class UxperfApplaunch(Workload):
         Parameter('workload_name', kind=str, description='Name of the application package to launch', mandatory=True),
         Parameter('applaunch_type', kind=str, default='warm',
                   description='Choose cold for cold start time or warm for warm start time'),
+        Parameter('applaunch_iterations', kind=int, default=1,
+                  description='Choose cold for cold start time or warm for warm start time'),
     ]
 
     def __init__(self, device, **kwargs):
@@ -52,7 +54,10 @@ class UxperfApplaunch(Workload):
     def validate(self):
         self.workload.validate()
         self.workload.uiauto_params['package'] = self.workload.package
-        self.workload.uiauto_params['activity'] = self.workload.activity
+        if self.workload.activity:
+            self.workload.uiauto_params['launch_activity'] = self.workload.activity
+        else:
+            self.workload.uiauto_params['launch_activity'] = "None"
         self.workload.uiauto_params['markers_enabled'] = self.workload.markers_enabled
         self.workload.uiauto_params['applaunch_type'] = self.applaunch_type
 
@@ -62,30 +67,19 @@ class UxperfApplaunch(Workload):
     def setup(self, context):
         AndroidBenchmark.setup(self.workload,context)
     
-    def applaunch_stop(self, context):
-        if self.applaunch_type == 'cold':
-            self.device.execute('am force-stop {}'.format(self.workload.package))
-
-    def kill_bg_processes(self, context):
-        self.device.execute('am kill-all')  # kill all *background* activities
-
-    def clear_logcat(self, context):
-        self.device.clear_logcat()
-
     def run(self, context):
         self.workload.uiauto_method = "runClearDialogues"
         UiAutomatorWorkload.setup(self.workload, context)
         UiAutomatorWorkload.run(self.workload, context)
-        applaunch_stop(self.workload, context)
-        self.workload.uiauto_method = "runApplaunchIteration"
         #Run iterations of applaunch test
-        for i in xrange(self.iterations):
+        for i in xrange(self.applaunch_iterations):
+            self.workload.uiauto_method = "runApplaunchIteration"
+            self.workload.uiauto_params['iteration_count'] = i
             UiAutomatorWorkload.setup(self.workload, context)
-            kill_bg_processes(self.workload,context)
+            AndroidBenchmark.clean_process(self.workload,context)
             UiAutomatorWorkload.run(self.workload, context)
-            AndroidBenchmark.update_result(self.workload,context)
-            clear_logcat(self.workload,context)
-            applaunch_stop(self.workload, context)
+            sleep(10)
+        AndroidBenchmark.update_result(self.workload,context)
 
     def teardown(self,context):
         UiAutomatorWorkload.teardown(self.workload, context)
@@ -96,4 +90,4 @@ class UxperfApplaunch(Workload):
 
 
 
-
+    

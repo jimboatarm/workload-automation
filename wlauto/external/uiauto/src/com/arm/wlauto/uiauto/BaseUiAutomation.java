@@ -111,16 +111,18 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
 
         private String packageName;
         private String activityName;
-        public String testTag = "applaunch";
+        private String testTag;
         public Bundle parameters;
         public ActionLogger logger;
         Process launch_p;
 
-        public AppLaunch(String packageName,
+        public AppLaunch(String testTag,
+                String packageName, 
                 String activityName, 
                 Bundle parameters) {
             this.packageName = packageName;
             this.activityName = activityName;
+            this.testTag= testTag;
             this.parameters = parameters;
             this.logger = new ActionLogger(testTag, parameters);
         }

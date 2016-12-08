@@ -17,6 +17,7 @@ package com.arm.wlauto.uiauto.googlephotos;
 
 import android.os.Bundle;
 import android.graphics.Rect;
+import android.util.Log;
 
 // Import the uiautomator libraries
 import com.android.uiautomator.core.UiObject;
@@ -82,7 +83,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         parameters = getParams();
         packageName = parameters.getString("package");
         packageID = packageName + ":id/";
-        sleep(10);
+        sleep(5);
         setScreenOrientation(ScreenOrientation.NATURAL);
         dismissWelcomeView();
         closePromotionPopUp();
@@ -95,8 +96,11 @@ public class UiAutomation extends UxPerfUiAutomation {
         packageID = packageName + ":id/";
         activityName = parameters.getString("launch_activity");
         applaunchType = parameters.getString("applaunch_type");
+
+        String iteration_count = parameters.getString("iteration_count");
+        String testTag = "applaunch" + iteration_count;
         //Applaunch object for launching an application and measuring the time taken
-        AppLaunch applaunch = new AppLaunch(packageName, activityName, parameters);
+        AppLaunch applaunch = new AppLaunch(testTag, packageName, activityName, parameters);
         //Widget on the screen that marks the application ready for user interaction
         UiObject userBeginObject =
             new UiObject(new UiSelector().textContains("Photos")

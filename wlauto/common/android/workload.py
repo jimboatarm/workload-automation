@@ -203,7 +203,13 @@ class ApkWorkload(Workload):
 
     def setup(self, context):
         Workload.setup(self, context)
+        self.setup_workload_apk(context)
+        self.launch_application(context)
+        self.clean_process(context)
+        self.clear_logdata(context)
+    
 
+    def setup_workload_apk(self,context):
         # Get target version
         target_version = self.device.get_installed_package_version(self.package)
         if target_version:
@@ -244,12 +250,17 @@ class ApkWorkload(Workload):
         self.reset(context)
         self.apk_version = self.device.get_installed_package_version(self.package)
         context.add_classifiers(apk_version=self.apk_version)
-
+        
+    def launch_application(self,context):
         if self.launch_main:
             self.launch_package()  # launch default activity without intent data
-        self.device.execute('am kill-all')  # kill all *background* activities
-        self.device.clear_logcat()
 
+    def clear_logdata(self,context):
+        self.device.clear_logcat()
+    
+    def clean_process(self,context):
+        self.device.execute('am kill-all')  # kill all *background* activities
+    
     def force_install_apk(self, context, host_version):
         if host_version is None:
             raise ResourceError("force_install is 'True' but could not find APK on the host")
