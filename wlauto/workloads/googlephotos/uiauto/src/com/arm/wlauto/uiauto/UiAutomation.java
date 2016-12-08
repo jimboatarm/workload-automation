@@ -111,6 +111,11 @@ public class UiAutomation extends UxPerfUiAutomation {
         if (applaunchType.equals("warm")) {
             pressHome();
         }
+        
+        if (applaunchType.equals("cold")) {
+            applaunch.stopApplication();//kill the application 
+            applaunch.dropInodeCache();//clear linux file system cache
+        }
 
     }
 

@@ -126,6 +126,27 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
             this.parameters = parameters;
             this.logger = new ActionLogger(testTag, parameters);
         }
+        
+        //Stops the active application.
+        public void stopApplication() throws Exception{
+            Process stop_app;
+            stop_app = Runtime.getRuntime().exec(String.format("am force-stop %s",
+                                packageName));
+            stop_app.waitFor();
+            stop_app.destroy();
+        }
+        
+        //Drops the Linux System File Cache
+        public void dropInodeCache() throws Exception{
+            Process drop_cache;
+            Process sync_p;
+            sync_p = Runtime.getRuntime().exec("sync");
+            sync_p.waitFor();
+            sync_p.destroy();
+            drop_cache = Runtime.getRuntime().exec("su echo 2 > /proc/sys/vm/drop_caches");
+            drop_cache.waitFor();
+            drop_cache.destroy();
+        }
 
         //Called by launchMain() to check if app launch is successful
         public void launchValidate(Process launch_p) throws Exception {
