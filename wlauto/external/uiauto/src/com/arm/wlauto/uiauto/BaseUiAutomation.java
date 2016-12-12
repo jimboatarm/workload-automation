@@ -148,14 +148,48 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
             drop_cache.destroy();
         }
 
+        //Drops the Page Cache
+        public void dropPageCache() throws Exception{
+            Process drop_cache;
+            Process sync_p;
+            sync_p = Runtime.getRuntime().exec("sync");
+            sync_p.waitFor();
+            sync_p.destroy();
+            drop_cache = Runtime.getRuntime().exec("su echo 1 > /proc/sys/vm/drop_caches");
+            drop_cache.waitFor();
+            drop_cache.destroy();
+        }
+
+        
+        //Drops the Linux System File and Page Cache
+        public void dropInodePageCache() throws Exception{
+            Process drop_cache;
+            Process sync_p;
+            sync_p = Runtime.getRuntime().exec("sync");
+            sync_p.waitFor();
+            sync_p.destroy();
+            drop_cache = Runtime.getRuntime().exec("su echo 3 > /proc/sys/vm/drop_caches");
+            drop_cache.waitFor();
+            drop_cache.destroy();
+        }
+/*
         //Called by launchMain() to check if app launch is successful
         public void launchValidate(Process launch_p) throws Exception {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(launch_p.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(launch_p.getErrorStream()));
             String line = null;
             while ((line = reader.readLine()) != null) {
                 if (line.contains("Error:")) {
                     throw new Exception("Application could not be launched");
                 }
+            }
+            reader.close();
+        }
+*/
+        //Called by launchMain() to check if app launch is successful
+        public void launchValidate(Process launch_p) throws Exception {
+            Integer exit_val = launch_p.exitValue();
+            if (exit_val != 0) {
+                throw new Exception("Application could not be launched");
             }
         }
 
@@ -174,19 +208,18 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
                                 packageName));
             }
             else {
-                launch_p = Runtime.getRuntime().exec(String.format("am start -W -n %s/%s",
+                launch_p = Runtime.getRuntime().exec(String.format("am start -n %s/%s",
                                 packageName, activityName));
             }
 
-            launch_p.waitFor();
-            launchValidate(launch_p);
+            //launchValidate(launch_p);
+
         }
         //Launches the Skype application
         public void launchMain(String actionName, String dataURI) throws Exception{
             launch_p = Runtime.getRuntime().exec(String.format("am start -W -a %s -d %s",
                                 actionName, dataURI));
 
-            launch_p.waitFor();
             launchValidate(launch_p);
         }
         

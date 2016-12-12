@@ -68,17 +68,17 @@ class UxperfApplaunch(Workload):
         AndroidBenchmark.setup(self.workload,context)
     
     def run(self, context):
-        self.workload.uiauto_method = "runClearDialogues"
+        self.workload.uiauto_method = "runApplaunchSetup"
         UiAutomatorWorkload.setup(self.workload, context)
         UiAutomatorWorkload.run(self.workload, context)
         #Run iterations of applaunch test
         for i in xrange(self.applaunch_iterations):
+            sleep(10)
             self.workload.uiauto_method = "runApplaunchIteration"
             self.workload.uiauto_params['iteration_count'] = i
             UiAutomatorWorkload.setup(self.workload, context)
             AndroidBenchmark.clean_process(self.workload,context)
             UiAutomatorWorkload.run(self.workload, context)
-            sleep(10)
         AndroidBenchmark.update_result(self.workload,context)
 
     def teardown(self,context):

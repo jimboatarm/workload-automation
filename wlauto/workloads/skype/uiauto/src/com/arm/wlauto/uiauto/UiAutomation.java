@@ -35,6 +35,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 
     public Bundle parameters;
     public String packageName;
+    protected String activityName;
+    protected String applaunchType;
     public String packageID;
 
     public static final String ACTION_VOICE = "voice";
@@ -48,8 +50,6 @@ public class UiAutomation extends UxPerfUiAutomation {
         packageName = parameters.getString("package");
         packageID = packageName + ":id/";
 
-        String loginName = parameters.getString("my_id");
-        String loginPass = parameters.getString("my_pwd");
         String contactName = parameters.getString("name").replace("0space0", " ");
         int callDuration = Integer.parseInt(parameters.getString("duration"));
         String callType = parameters.getString("action");
@@ -62,8 +62,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         runWatchers();
 
         // Run tests
-        handleLoginScreen(loginName, loginPass);
-        dismissUpdatePopupIfPresent();
+        clearDialogues();
         searchForContact(contactName);
 
         if (ACTION_VOICE.equalsIgnoreCase(callType)) {
@@ -74,6 +73,56 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         removeWatcher("infoPopUpWatcher");
         unsetScreenOrientation();
+    }
+    
+    public void clearDialogues() throws Exception {
+        String loginName = parameters.getString("my_id");
+        String loginPass = parameters.getString("my_pwd");
+        handleLoginScreen(loginName, loginPass);
+        dismissUpdatePopupIfPresent();
+    }
+
+    public void applaunchEnd() throws Exception {
+        applaunchType = parameters.getString("applaunch_type");
+        if (applaunchType.equals("warm")) {
+            pressHome();
+        }
+    }
+    
+    public void runApplaunchSetup() throws Exception {
+        parameters = getParams();
+        packageName = parameters.getString("package");
+        packageID = packageName + ":id/";
+        sleep(5);
+        setScreenOrientation(ScreenOrientation.NATURAL);
+        clearDialogues();
+        unsetScreenOrientation();
+        applaunchEnd();
+    }
+    
+    public void runApplaunchIteration() throws Exception {
+        parameters = getParams();
+        packageName = parameters.getString("package");
+        packageID = packageName + ":id/";
+        activityName = parameters.getString("launch_activity");
+
+        String iteration_count = parameters.getString("iteration_count");
+        String testTag = "applaunch" + iteration_count;
+        //Applaunch object for launching an application and measuring the time taken
+        AppLaunch applaunch = new AppLaunch(testTag, packageName, activityName, parameters);
+        //Widget on the screen that marks the application ready for user interaction
+        UiObject userBeginObject =
+            new UiObject(new UiSelector().resourceId(packageID + "menu_search"));
+        
+        applaunch.startLaunch();//Launch the appl;ication and start timer 
+        applaunch.endLaunch(userBeginObject,10);//marks the end of launch and stops timer
+        applaunchEnd();
+
+        if (applaunchType.equals("cold")) {
+            applaunch.stopApplication();//kill the application 
+            applaunch.dropInodeCache();//clear linux file system cache
+        }
+
     }
 
     public void handleLoginScreen(String username, String password) throws Exception {

@@ -52,7 +52,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         packageName = parameters.getString("package");
         packageID = packageName + ":id/";
         
-        runClearDialogues();
+        setScreenOrientation(ScreenOrientation.NATURAL);
+        clearDialogues();
 
         selectGalleryFolder("wa-1");
         selectFirstImage();
@@ -79,15 +80,27 @@ public class UiAutomation extends UxPerfUiAutomation {
         unsetScreenOrientation();
     }
 
-    public void runClearDialogues() throws Exception {
+    public void clearDialogues() throws Exception {
+        dismissWelcomeView();
+        closePromotionPopUp();
+    }
+    
+    public void applaunchEnd() throws Exception {
+        applaunchType = parameters.getString("applaunch_type");
+        if (applaunchType.equals("warm")) {
+            pressHome();
+        }
+    }
+
+    public void runApplaunchSetup() throws Exception {
         parameters = getParams();
         packageName = parameters.getString("package");
         packageID = packageName + ":id/";
         sleep(5);
         setScreenOrientation(ScreenOrientation.NATURAL);
-        dismissWelcomeView();
-        closePromotionPopUp();
+        clearDialogues();
         unsetScreenOrientation();
+        applaunchEnd();
     }
     
     public void runApplaunchIteration() throws Exception {
@@ -95,7 +108,6 @@ public class UiAutomation extends UxPerfUiAutomation {
         packageName = parameters.getString("package");
         packageID = packageName + ":id/";
         activityName = parameters.getString("launch_activity");
-        applaunchType = parameters.getString("applaunch_type");
 
         String iteration_count = parameters.getString("iteration_count");
         String testTag = "applaunch" + iteration_count;
@@ -108,10 +120,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         
         applaunch.startLaunch();//Launch the appl;ication and start timer 
         applaunch.endLaunch(userBeginObject,10);//marks the end of launch and stops timer
-        if (applaunchType.equals("warm")) {
-            pressHome();
-        }
-        
+        applaunchEnd();
+
         if (applaunchType.equals("cold")) {
             applaunch.stopApplication();//kill the application 
             applaunch.dropInodeCache();//clear linux file system cache
