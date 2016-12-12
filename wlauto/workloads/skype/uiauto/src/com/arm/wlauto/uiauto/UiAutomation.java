@@ -105,6 +105,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         packageName = parameters.getString("package");
         packageID = packageName + ":id/";
         activityName = parameters.getString("launch_activity");
+        String actionName = "android.intent.action.VIEW"; //required for launching skype
+        String dataURI = "skype:dummy?dummy"; // required for launching skype
 
         String iteration_count = parameters.getString("iteration_count");
         String testTag = "applaunch" + iteration_count;
@@ -114,7 +116,11 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject userBeginObject =
             new UiObject(new UiSelector().resourceId(packageID + "menu_search"));
         
-        applaunch.startLaunch();//Launch the appl;ication and start timer 
+        UiWatcher videoPopupWatcher = videoPopupWatcher();
+        registerWatcher("videoPopupwatcher", videoPopupWatcher);
+        runWatchers();
+
+        applaunch.startLaunch(actionName, dataURI);//Launch the appl;ication and start timer 
         applaunch.endLaunch(userBeginObject,10);//marks the end of launch and stops timer
         applaunchEnd();
 
@@ -191,6 +197,28 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
     }
 
+    // Creates a watcher for when a pop up dialog appears with a dismiss button.
+    private UiWatcher videoPopupWatcher() throws Exception {
+        UiWatcher infoPopUpWatcher = new UiWatcher() {
+            @Override
+            public boolean checkForCondition() {
+                UiObject gotitButton =
+                    new UiObject(new UiSelector().textContains("GOT IT"));
+
+                if (gotitButton.exists()) {
+                    try {
+                        gotitButton.click();
+                    } catch (UiObjectNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    return gotitButton.waitUntilGone(TimeUnit.SECONDS.toMillis(10));
+                }
+                return false;
+            }
+        };
+        return infoPopUpWatcher;
+    }
     // Creates a watcher for when a pop up dialog appears with a dismiss button.
     private UiWatcher createInfoPopUpWatcher() throws Exception {
         UiWatcher infoPopUpWatcher = new UiWatcher() {

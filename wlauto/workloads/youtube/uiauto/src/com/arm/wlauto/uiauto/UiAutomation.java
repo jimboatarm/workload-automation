@@ -107,7 +107,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject userBeginObject =
             new UiObject(new UiSelector().resourceId(packageID + "menu_search"));
         
-        //applaunch.startLaunch();//Launch the appl;ication and start timer 
+        applaunch.startLaunch();//Launch the application and start timer 
 
         applaunch.endLaunch(userBeginObject,10);//marks the end of launch and stops timer
         applaunchEnd();
@@ -173,10 +173,6 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     
-    public void relaunchApp() throws Exception {
-        clickUiObject(BY_DESC, "More options");
-        clickUiObject(BY_TEXT, "Settings", true);
-        clickUiObject(BY_TEXT, "General", true);
 
     public void testPlayVideo(String source, String searchTerm) throws Exception {
         String testTag = "play";

@@ -127,14 +127,11 @@ public class UiAutomation extends UxPerfUiAutomation {
         AppLaunch applaunch = new AppLaunch(testTag, packageName, activityName, parameters);
         //Widget on the screen that marks the application ready for user interaction
         UiObject userBeginObject =
-            new UiObject(new UiSelector().resourceId(packageID + "menu_search"));
+            new UiObject(new UiSelector().className("android.widget.ImageButton"));
         
         applaunch.startLaunch();//Launch the application and start timer
-        System.out.print("launched");
         applaunch.endLaunch(userBeginObject,20);//marks the end of launch and stops timer
-        System.out.print("launch end ");
         applaunchEnd();
-        System.out.print("cant press home");
 
         if (applaunchType.equals("cold")) {
             applaunch.stopApplication();//kill the application 

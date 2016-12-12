@@ -66,6 +66,9 @@ class UxperfApplaunch(Workload):
 
     def setup(self, context):
         AndroidBenchmark.setup(self.workload,context)
+        if self.workload.launch_main == False:
+            self.workload.launch_app()
+
     
     def run(self, context):
         self.workload.uiauto_method = "runApplaunchSetup"

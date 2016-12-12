@@ -187,6 +187,7 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
 */
         //Called by launchMain() to check if app launch is successful
         public void launchValidate(Process launch_p) throws Exception {
+            launch_p.waitFor();
             Integer exit_val = launch_p.exitValue();
             if (exit_val != 0) {
                 throw new Exception("Application could not be launched");
@@ -204,7 +205,7 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
         //Launches the application.
         public void launchMain() throws Exception{
             if(activityName.equals("None")) {
-                launch_p = Runtime.getRuntime().exec(String.format("am start -W %s",
+                launch_p = Runtime.getRuntime().exec(String.format("am start %s",
                                 packageName));
             }
             else {
@@ -212,12 +213,12 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
                                 packageName, activityName));
             }
 
-            //launchValidate(launch_p);
+            launchValidate(launch_p);
 
         }
         //Launches the Skype application
         public void launchMain(String actionName, String dataURI) throws Exception{
-            launch_p = Runtime.getRuntime().exec(String.format("am start -W -a %s -d %s",
+            launch_p = Runtime.getRuntime().exec(String.format("am start -a %s -d %s",
                                 actionName, dataURI));
 
             launchValidate(launch_p);
