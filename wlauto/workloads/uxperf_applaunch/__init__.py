@@ -69,19 +69,47 @@ class UxperfApplaunch(Workload):
         if self.workload.launch_main == False:
             self.workload.launch_app()
 
+    def stop_application(self, context):
+        self.device.execute('am force-stop {}'.format(self.workload.package)) 
+
+    def drop_pagecache(self):
+        self.device.execute('sync') 
+        self.device.execute('echo 1 > /proc/sys/vm/drop_caches', as_root=True) 
     
+    def drop_inodecache(self):
+        self.device.execute('sync') 
+        self.device.execute('echo 2 > /proc/sys/vm/drop_caches', as_root=True) 
+    
+    def drop_inodepagecache(self):
+        self.device.execute('sync') 
+        self.device.execute('echo 3 > /proc/sys/vm/drop_caches',  as_root=True) 
+    
+    def clean_application(self,context):
+        self.stop_application(context)
+        if(self.applaunch_type == 'cold_inode'):
+            self.drop_inodecache()
+        elif(self.applaunch_type == 'cold_page'):
+            self.drop_pagecache()
+        elif(self.applaunch_type == 'cold_inodepage'):
+            self.drop_inodepagecache()
+        else:
+            raise ConfigError("Applaunch type specified wrong")
+            
     def run(self, context):
         self.workload.uiauto_method = "runApplaunchSetup"
         UiAutomatorWorkload.setup(self.workload, context)
         UiAutomatorWorkload.run(self.workload, context)
         #Run iterations of applaunch test
         for i in xrange(self.applaunch_iterations):
+            if self.applaunch_type != 'warm':
+                self.clean_application(context)
             sleep(10)
             self.workload.uiauto_method = "runApplaunchIteration"
             self.workload.uiauto_params['iteration_count'] = i
             UiAutomatorWorkload.setup(self.workload, context)
             AndroidBenchmark.clean_process(self.workload,context)
             UiAutomatorWorkload.run(self.workload, context)
+
         AndroidBenchmark.update_result(self.workload,context)
 
     def teardown(self,context):
