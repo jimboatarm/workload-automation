@@ -63,8 +63,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
 	
     
 	//Clear the initial run dialogues of the application launch.
-	@Override
-	public void clearDialogues() {
+	public void clearDialogues() throws Exception {
         getParameters();
         dismissWelcomeView();
     }

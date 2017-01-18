@@ -29,6 +29,6 @@ public interface ApplaunchInterface {
 	//This method has the Uiautomation methods for clearing the initial run
 	//dialogues of an application package. This is workload specific and 
 	//is expected to be overridden by the workload that inherits this class.
-	public void clearDialogues();
+	public void clearDialogues() throws Exception;
 	public String getLaunchCommand();
 }
