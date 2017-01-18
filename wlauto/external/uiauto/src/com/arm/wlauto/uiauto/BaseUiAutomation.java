@@ -43,6 +43,19 @@ import com.android.uiautomator.core.UiWatcher;
 import com.android.uiautomator.testrunner.UiAutomatorTestCase;
 
 public class BaseUiAutomation extends UiAutomatorTestCase {
+    public Bundle parameters;
+    public String packageName;
+    public String packageID;
+    public String activityName;
+
+	//Get application package parameter and create package ID
+	public void getParameters() {
+        parameters = getParams();
+        packageName = parameters.getString("package");
+        activityName = parameters.getString("launch_activity");
+        packageID = packageName + ":id/";
+
+	}
 
     public long uiAutoTimeout = TimeUnit.SECONDS.toMillis(4);
 

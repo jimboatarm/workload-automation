@@ -24,6 +24,8 @@ import com.android.uiautomator.core.UiObjectNotFoundException;
 import com.android.uiautomator.core.UiSelector;
 
 import com.arm.wlauto.uiauto.UxPerfUiAutomation;
+import com.arm.wlauto.uiauto.UxPerfApplaunch;
+import com.arm.wlauto.uiauto.ApplaunchInterface;
 
 import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_ID;
 import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_TEXT;
@@ -35,7 +37,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class UiAutomation extends UxPerfUiAutomation {
+
+public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterface{
 
 
     private long networkTimeout =  TimeUnit.SECONDS.toMillis(20);
@@ -60,16 +63,34 @@ public class UiAutomation extends UxPerfUiAutomation {
 	
     
 	//Clear the initial run dialogues of the application launch.
-    public void clearDialogues() throws Exception {
+	@Override
+	public void clearDialogues() {
         getParameters();
         dismissWelcomeView();
     }
     
 	//Sets the UiObject that marsk teh end of the application launch.
-	public void setUserBeginObject() {
-		userBeginObject = new UiObject(new UiSelector().textContains("RECENT")
+	public UiObject setUserBeginObject() {
+		UiObject userBeginObject = new UiObject(new UiSelector().textContains("RECENT")
                                          .className("android.widget.TextView"));
+		return userBeginObject;
 	}
+    
+	//Returns the launch command for the application.
+    public String getLaunchCommand() {
+		String launch_command;
+        if(activityName.equals("None")) {
+            launch_command = String.format("am start %s", packageName);
+        }
+        else {
+            launch_command = String.format("am start -n %s/%s", packageName, activityName);
+        }
+
+            //launch_command = String.format("am start -a %s -d %s", actionName, dataURI);
+
+		return launch_command;
+    }
+        
     
 
     private void dismissWelcomeView() throws Exception {
@@ -108,7 +129,7 @@ public class UiAutomation extends UxPerfUiAutomation {
         actionBarTitle.waitForExists(uiAutoTimeout);
     }
 
-    private void openFile(final String filename) throws Exception {
+    private void openFile(final String filename) throws RuntimeException {
         String testTag = "open_document";
         ActionLogger logger = new ActionLogger(testTag, parameters);
 

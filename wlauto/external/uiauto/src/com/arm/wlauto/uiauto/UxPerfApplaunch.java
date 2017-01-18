@@ -18,6 +18,8 @@ package com.arm.wlauto.uiauto;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.util.*;
+
 // Import the uiautomator libraries
 import com.android.uiautomator.core.UiObject;
 import com.android.uiautomator.core.UiObjectNotFoundException;
@@ -26,12 +28,9 @@ import com.android.uiautomator.core.UiSelector;
 import com.android.uiautomator.core.UiDevice;
 import com.android.uiautomator.core.UiWatcher;
 
+
 public class UxPerfApplaunch extends BaseUiAutomation {
-    public Bundle parameters;
-    public String packageName;
-    public String packageID;
-    public String applaunchType;
-    public String activityName;
+    
 
 	//Uiobject that marks the end of launch of an application.
 	//This is workload spefific and added in the workload Java file
@@ -40,19 +39,26 @@ public class UxPerfApplaunch extends BaseUiAutomation {
 
     //Timeout to wait for application launch to finish. 
 	private Integer launch_timeout = 10;
-	
-	//Get application package parameter and create package ID
-	public void getParameters() {
-        parameters = getParams();
-        packageName = parameters.getString("package");
-        activityName = parameters.getString("launch_activity");
-        packageID = packageName + ":id/";
-
-	}
     
+	public String applaunchType;
+
+	public ApplaunchInterface launch_workload;
+
 	//uiautomator function called by the uxperfapplaunch workload.
 	public void runUxperfApplaunch() throws Exception {
-        getParameters();
+		getParameters();
+		ClassLoader classLoader = UxPerfApplaunch.class.getClassLoader();
+		Class uiautomation = null;
+		Object o;
+		try {
+			uiautomation = classLoader.loadClass("com.arm.wlauto.uiauto.adobereader.UiAutomation");
+		}catch (ClassNotFoundException e) {
+		e.printStackTrace();
+		}
+        
+		o = uiautomation.newInstance();
+		launch_workload = ((ApplaunchInterface)o);
+
         applaunchType = parameters.getString("applaunch_type");
         String applaunchIterations = parameters.getString("applaunch_iterations");
         Log.d("Applaunch iteration number: ", applaunchIterations);
@@ -71,8 +77,8 @@ public class UxPerfApplaunch extends BaseUiAutomation {
     public void runApplaunchSetup() throws Exception {
         sleep(5);
         setScreenOrientation(ScreenOrientation.NATURAL);
-        clearDialogues();
-		setUserBeginObject();
+        launch_workload.clearDialogues();
+		launch_workload.setUserBeginObject();
         unsetScreenOrientation();
         closeApplication();
 	}
@@ -81,7 +87,8 @@ public class UxPerfApplaunch extends BaseUiAutomation {
 	//records the time taken for each iteration.
 	public void runApplaunchIteration(Integer iteration_count) throws Exception {
 		String testTag = "applaunch" + iteration_count;
-        AppLaunch applaunch = new AppLaunch(testTag);
+		String launchCommand = launch_workload.getLaunchCommand();
+        AppLaunch applaunch = new AppLaunch(testTag, launchCommand);
         applaunch.startLaunch();//Launch the application and start timer 
         applaunch.endLaunch();//marks the end of launch and stops timer
     }
@@ -94,14 +101,16 @@ public class UxPerfApplaunch extends BaseUiAutomation {
      * endLaunch(): Marks the end of application, ends Timer
 	 * launchMain(): Starts the application launch process and validates the finish of launch.
     */
-    public class AppLaunch {
+    private class AppLaunch {
 
     	private String testTag;
+    	private String launchCommand;
         private ActionLogger logger;
         Process launch_p;
 
-        public AppLaunch(String testTag) {
-            this.testTag= testTag;
+        public AppLaunch(String testTag, String launchCommand) {
+            this.testTag = testTag;
+            this.launchCommand = launchCommand;
             this.logger = new ActionLogger(testTag, parameters);
         }
         
@@ -125,22 +134,7 @@ public class UxPerfApplaunch extends BaseUiAutomation {
 
         //Launches the application.
         public void launchMain() throws Exception{
-            if(activityName.equals("None")) {
-                launch_p = Runtime.getRuntime().exec(String.format("am start %s",
-                                packageName));
-            }
-            else {
-                launch_p = Runtime.getRuntime().exec(String.format("am start -n %s/%s",
-                                packageName, activityName));
-            }
-
-            launchValidate(launch_p);
-
-        }
-        //Launches the application
-        public void launchMain(String actionName, String dataURI) throws Exception{
-            launch_p = Runtime.getRuntime().exec(String.format("am start -a %s -d %s",
-                                actionName, dataURI));
+            launch_p = Runtime.getRuntime().exec(launchCommand);
 
             launchValidate(launch_p);
         }
@@ -152,25 +146,8 @@ public class UxPerfApplaunch extends BaseUiAutomation {
             launchMain();
         }
         
-		//Beginning of application launch
-        public void startLaunch(String actionName, String dataURI) throws Exception{
-            logger.start();
-            launchMain(actionName, dataURI);
-        }
     }
 	
-	//This method has the Uiautomation methods for clearing the initial run
-	//dialogues of an application package. This is workload specific and 
-	//is expected to be overridden by the workload that inherits this class.
-    public void clearDialogues() throws Exception {
-
-	}
-    
-	//Method that sets the userbeginObject per workload. This is workload specific and 
-	//is expected to be overridden by the workload that inherits this class.
-    public void setUserBeginObject() throws Exception {
-	
-	}
 
     //Exits the application according to application launch type.
     public void closeApplication() throws Exception{
@@ -186,7 +163,7 @@ public class UxPerfApplaunch extends BaseUiAutomation {
     //Kills the application process
     public void killApplication() throws Exception{
 		Process kill_p;
-		kill_p = Runtime.getRuntime().exec(String.format("am force-stop %s",packageName));
+		kill_p = Runtime.getRuntime().exec(String.format("am force-stop %s", packageName));
 		kill_p.waitFor();
 		kill_p.destroy();
     }
@@ -203,7 +180,7 @@ public class UxPerfApplaunch extends BaseUiAutomation {
 	//Drop the caches
     public void dropCaches() throws Exception{
         Process drop_cache;
-        drop_cache = Runtime.getRuntime().exec("sync; su echo 3 > /proc/sys/vm/drop_caches");
+        drop_cache = Runtime.getRuntime().exec("su ync; su echo 3 > /proc/sys/vm/drop_caches");
         drop_cache.waitFor();
         drop_cache.destroy();
     }
