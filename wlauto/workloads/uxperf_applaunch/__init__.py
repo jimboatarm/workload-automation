@@ -25,6 +25,8 @@ from wlauto import settings
 from wlauto.exceptions import ConfigError
 from wlauto.utils.android import ApkInfo
 
+import wlauto.common.android.resources
+
 
 class UxperfApplaunch(Workload):
     """
@@ -124,33 +126,36 @@ class UxperfApplaunch(Workload):
                                             **self.workload_params)
 
     def validate(self):
+        super(UxperfApplaunch, self).validate()
         self.workload.validate()
         self.workload.uiauto_params['package'] = self.workload.package
+        self.uiauto_params['package'] = self.workload.package
         if self.workload.activity:
             self.workload.uiauto_params[
                 'launch_activity'] = self.workload.activity
+            self.uiauto_params['launch_activity'] = self.workload.activity
         else:
             self.workload.uiauto_params['launch_activity'] = "None"
+            self.uiauto_params['launch_activity'] = "None"
         self.workload.uiauto_params['applaunch_type'] = self.applaunch_type
+        self.uiauto_params['applaunch_type'] = self.applaunch_type
         self.workload.uiauto_params['applaunch_iterations'] = self.applaunch_iterations
+        self.uiauto_params['applaunch_iterations'] = self.applaunch_iterations
 
     def init_resources(self, context):
-        self.workload.init_resources(context)
-        self.logfile_path_list=[]
-
-    def update_result(self, context):
-        AndroidBenchmark.update_result(self.workload, context)
+        super(UxperfApplaunch, self).init_resources(context)
+        self.workload_file = context.resolver.get(wlauto.common.android.resources.JarFile(self.workload))
+        if not self.workload_file:
+            raise ResourceError('No UI automation JAR file found for workload {}.'.format(self.workload.name))
+        self.device_workload_file = self.device.path.join(self.device.working_directory,
+                                                        os.path.basename(self.workload_file))
 
     def setup(self, context):
         AndroidBenchmark.setup(self.workload, context)
         if not self.workload.launch_main:  # Required for launching skype
             self.workload.launch_app()
-        self.workload.uiauto_method = "runUxperfApplaunch"
         UiAutomatorWorkload.setup(self.workload, context)
 
     def run(self, context):
         UiAutomatorWorkload.run(self.workload, context)
 
-    def teardown(self, context):
-        UiAutomatorWorkload.teardown(self.workload, context)
-        AndroidBenchmark.teardown(self.workload, context)

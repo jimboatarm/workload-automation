@@ -45,18 +45,18 @@ public class UxPerfApplaunch extends BaseUiAutomation {
 	public ApplaunchInterface launch_workload;
 
 	//uiautomator function called by the uxperfapplaunch workload.
-	public void runUxperfApplaunch() throws Exception {
+	public void runUxperfApplaunch() throws Exception{
 		getParameters();
 		ClassLoader classLoader = UxPerfApplaunch.class.getClassLoader();
 		Class uiautomation = null;
-		Object o;
+		Object o = null;
 		try {
 			uiautomation = classLoader.loadClass("com.arm.wlauto.uiauto.adobereader.UiAutomation");
+			o = uiautomation.newInstance();
 		}catch (ClassNotFoundException e) {
 		e.printStackTrace();
 		}
         
-		o = uiautomation.newInstance();
 		launch_workload = ((ApplaunchInterface)o);
 
         applaunchType = parameters.getString("applaunch_type");
@@ -74,7 +74,7 @@ public class UxPerfApplaunch extends BaseUiAutomation {
 
     //Setup run for uxperfapplaunch workload that clears the initial
 	//run dialogues on launching an application package.
-    public void runApplaunchSetup() throws Exception {
+    public void runApplaunchSetup() throws Exception{
         sleep(5);
         setScreenOrientation(ScreenOrientation.NATURAL);
         launch_workload.clearDialogues();
@@ -85,7 +85,7 @@ public class UxPerfApplaunch extends BaseUiAutomation {
     
 	//This method performs multiple iterations of application launch and 
 	//records the time taken for each iteration.
-	public void runApplaunchIteration(Integer iteration_count) throws Exception {
+	public void runApplaunchIteration(Integer iteration_count) throws Exception{
 		String testTag = "applaunch" + iteration_count;
 		String launchCommand = launch_workload.getLaunchCommand();
         AppLaunch applaunch = new AppLaunch(testTag, launchCommand);

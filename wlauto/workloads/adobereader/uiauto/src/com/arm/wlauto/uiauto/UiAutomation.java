@@ -128,7 +128,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
         actionBarTitle.waitForExists(uiAutoTimeout);
     }
 
-    private void openFile(final String filename) throws RuntimeException {
+    private void openFile(final String filename) throws Exception {
         String testTag = "open_document";
         ActionLogger logger = new ActionLogger(testTag, parameters);
 
