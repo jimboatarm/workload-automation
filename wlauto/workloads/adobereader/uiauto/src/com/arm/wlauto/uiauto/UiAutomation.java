@@ -24,7 +24,6 @@ import com.android.uiautomator.core.UiObjectNotFoundException;
 import com.android.uiautomator.core.UiSelector;
 
 import com.arm.wlauto.uiauto.UxPerfUiAutomation;
-import com.arm.wlauto.uiauto.UxPerfApplaunch;
 import com.arm.wlauto.uiauto.ApplaunchInterface;
 
 import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_ID;
@@ -45,13 +44,14 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
     private long searchTimeout =  TimeUnit.SECONDS.toMillis(20);
     
     public void runUiAutomation() throws Exception {
-        getParameters();
+        parameters = getParams();
+		getParameters();
         String filename = parameters.getString("filename").replace("0space0", " ");
         String[] searchStrings =
             parameters.getString("search_string_list").replace("0space0", " ").split("0newline0");
 
         setScreenOrientation(ScreenOrientation.NATURAL);
-        clearDialogues();
+        initializeApplication();
 
         openFile(filename);
         gesturesTest();
@@ -63,7 +63,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
 	
     
 	//Clear the initial run dialogues of the application launch.
-	public void clearDialogues() throws Exception {
+	public void initializeApplication() throws Exception {
         getParameters();
         dismissWelcomeView();
     }
@@ -88,6 +88,12 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
             //launch_command = String.format("am start -a %s -d %s", actionName, dataURI);
 
 		return launch_command;
+    }
+    
+    //public void setWorkloadParameters(Bundle workload_parameters) {
+    public void setWorkloadParameters() {
+		Log.d("workload", "parameters");
+		//parameters = workload_parameters;
     }
         
     

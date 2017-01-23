@@ -85,10 +85,12 @@ class UiAutomatorWorkload(Workload):
 
     def init_resources(self, context):
         self.uiauto_file = context.resolver.get(wlauto.common.android.resources.JarFile(self))
+        print self.uiauto_file
         if not self.uiauto_file:
             raise ResourceError('No UI automation JAR file found for workload {}.'.format(self.name))
         self.device_uiauto_file = self.device.path.join(self.device.working_directory,
                                                         os.path.basename(self.uiauto_file))
+        print self.device_uiauto_file
         if not self.uiauto_package:
             self.uiauto_package = os.path.splitext(os.path.basename(self.uiauto_file))[0]
 

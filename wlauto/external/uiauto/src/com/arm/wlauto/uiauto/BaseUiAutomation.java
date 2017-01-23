@@ -48,14 +48,13 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
     public String packageID;
     public String activityName;
 
-	//Get application package parameter and create package ID
-	public void getParameters() {
-        parameters = getParams();
+    //Get application package parameter and create package ID
+    public void getParameters() {
         packageName = parameters.getString("package");
         activityName = parameters.getString("launch_activity");
         packageID = packageName + ":id/";
 
-	}
+    }
 
     public long uiAutoTimeout = TimeUnit.SECONDS.toMillis(4);
 

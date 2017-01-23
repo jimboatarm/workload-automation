@@ -28,7 +28,7 @@ from wlauto.utils.android import ApkInfo
 import wlauto.common.android.resources
 
 
-class UxperfApplaunch(Workload):
+class UxperfApplaunch(AndroidUxPerfWorkload):
     """
     A workload that helps to launch other workloads and measure the application
     launch time
@@ -111,11 +111,6 @@ class UxperfApplaunch(Workload):
                   description="""
                   Number of iterations of the application launch
                   """),
-        Parameter('markers_enabled', kind=bool, default=False,
-                  description="""
-                  If ``True``, UX_PERF action markers will be emitted to
-                  logcat during the test run.
-                  """),
     ]
 
     def __init__(self, device, **kwargs):
@@ -125,37 +120,37 @@ class UxperfApplaunch(Workload):
         self.workload = loader.get_workload(self.workload_name, device,
                                             **self.workload_params)
 
+    def init_resources(self, context):
+        super(UxperfApplaunch, self).init_resources(context)
+        self.workload.init_resources(context)
+
     def validate(self):
         super(UxperfApplaunch, self).validate()
         self.workload.validate()
-        self.workload.uiauto_params['package'] = self.workload.package
+        self.pass_parameters()
+
+    def pass_parameters(self):
         self.uiauto_params['package'] = self.workload.package
+        self.uiauto_params.update(self.workload_params)
         if self.workload.activity:
-            self.workload.uiauto_params[
-                'launch_activity'] = self.workload.activity
             self.uiauto_params['launch_activity'] = self.workload.activity
         else:
-            self.workload.uiauto_params['launch_activity'] = "None"
             self.uiauto_params['launch_activity'] = "None"
-        self.workload.uiauto_params['applaunch_type'] = self.applaunch_type
         self.uiauto_params['applaunch_type'] = self.applaunch_type
-        self.workload.uiauto_params['applaunch_iterations'] = self.applaunch_iterations
         self.uiauto_params['applaunch_iterations'] = self.applaunch_iterations
-
-    def init_resources(self, context):
-        super(UxperfApplaunch, self).init_resources(context)
-        self.workload_file = context.resolver.get(wlauto.common.android.resources.JarFile(self.workload))
-        if not self.workload_file:
-            raise ResourceError('No UI automation JAR file found for workload {}.'.format(self.workload.name))
-        self.device_workload_file = self.device.path.join(self.device.working_directory,
-                                                        os.path.basename(self.workload_file))
 
     def setup(self, context):
         AndroidBenchmark.setup(self.workload, context)
         if not self.workload.launch_main:  # Required for launching skype
             self.workload.launch_app()
-        UiAutomatorWorkload.setup(self.workload, context)
+        UiAutomatorWorkload.setup(self, context)
+        #self.workload.device.push_file(self.workload.uiauto_file, "/sdcard/")
 
     def run(self, context):
-        UiAutomatorWorkload.run(self.workload, context)
+        UiAutomatorWorkload.run(self, context)
+
+    def teardown(self,context):
+        AndroidBenchmark.teardown(self.workload, context)
+        UiAutomatorWorkload.teardown(self.workload, context)
+        super(UxperfApplaunch, self).teardown(context)
 
