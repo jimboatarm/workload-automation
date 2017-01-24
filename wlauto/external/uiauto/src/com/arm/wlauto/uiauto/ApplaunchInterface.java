@@ -25,11 +25,11 @@ import com.android.uiautomator.core.UiObject;
 public interface ApplaunchInterface {
 	//Method that sets the userbeginObject per workload. This is workload specific and 
 	//is expected to be overridden by the workload that inherits this class.
-	public UiObject setUserBeginObject();
+	public UiObject getUserBeginObject();
 	//This method has the Uiautomation methods for clearing the initial run
 	//dialogues of an application package. This is workload specific and 
 	//is expected to be overridden by the workload that inherits this class.
-	public void initializeApplication() throws Exception;
+	public void clearDialogues() throws Exception;
 	public String getLaunchCommand();
 	public void setWorkloadParameters();
 }

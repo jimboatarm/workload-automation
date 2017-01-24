@@ -51,7 +51,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
             parameters.getString("search_string_list").replace("0space0", " ").split("0newline0");
 
         setScreenOrientation(ScreenOrientation.NATURAL);
-        initializeApplication();
+        clearDialogues();
 
         openFile(filename);
         gesturesTest();
@@ -63,13 +63,14 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
 	
     
 	//Clear the initial run dialogues of the application launch.
-	public void initializeApplication() throws Exception {
+	public void clearDialogues() throws Exception {
         getParameters();
         dismissWelcomeView();
     }
     
 	//Sets the UiObject that marsk teh end of the application launch.
-	public UiObject setUserBeginObject() {
+	public UiObject getUserBeginObject() {
+		Log.d("Jumanji","adobe");
 		UiObject userBeginObject = new UiObject(new UiSelector().textContains("RECENT")
                                          .className("android.widget.TextView"));
 		return userBeginObject;
