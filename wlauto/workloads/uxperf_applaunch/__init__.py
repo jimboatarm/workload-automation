@@ -144,7 +144,7 @@ class UxperfApplaunch(AndroidUxPerfWorkload):
         if not self.workload.launch_main:  # Required for launching skype
             self.workload.launch_app()
         UiAutomatorWorkload.setup(self, context)
-        self.workload.device.push_file(self.workload.uiauto_file, self.workload.device_uiauto_file)
+        self.workload.device.push_file(self.workload.uiauto_file, "/data/local/tmp/")
 
     def run(self, context):
         UiAutomatorWorkload.run(self, context)

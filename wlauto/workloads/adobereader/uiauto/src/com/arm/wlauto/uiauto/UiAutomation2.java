@@ -24,7 +24,7 @@ import com.android.uiautomator.core.UiObjectNotFoundException;
 import com.android.uiautomator.core.UiSelector;
 
 import com.arm.wlauto.uiauto.UxPerfUiAutomation;
-import com.arm.wlauto.uiauto.ApplaunchInterface;
+//import com.arm.wlauto.uiauto.ApplaunchInterface;
 
 import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_ID;
 import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_TEXT;
@@ -37,7 +37,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 
-public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterface{
+//public class UiAutomation extends UxPerfUiAutomation //implements ApplaunchInterface{
+public class UiAutomation2 extends UxPerfUiAutomation {
 
 
     private long networkTimeout =  TimeUnit.SECONDS.toMillis(20);
