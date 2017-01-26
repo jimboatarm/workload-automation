@@ -31,5 +31,5 @@ public interface ApplaunchInterface {
 	//is expected to be overridden by the workload that inherits this class.
 	public void clearDialogues() throws Exception;
 	public String getLaunchCommand();
-	public void setWorkloadParameters();
+	public void setWorkloadParameters(Bundle parameters);
 }
