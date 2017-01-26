@@ -88,7 +88,6 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
     
 	//Sets the UiObject that marsk teh end of the application launch.
 	public UiObject getUserBeginObject() {
-		Log.d("Jumanji","adobe");
 		UiObject userBeginObject = new UiObject(new UiSelector().textContains("Photos")
                                          .className("android.widget.TextView"));
 		return userBeginObject;
