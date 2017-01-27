@@ -188,7 +188,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
                         e.printStackTrace();
                     }
 
-                    return dismissButton.waitUntilGone(TimeUnit.SECONDS.toMillis(10));
+                    return dismissButton.waitUntilGone(TimeUnit.SECONDS.toMillis(100));
                 }
                 return false;
             }
