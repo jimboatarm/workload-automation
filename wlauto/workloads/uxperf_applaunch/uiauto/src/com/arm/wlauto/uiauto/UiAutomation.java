@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Map.Entry;
 import java.lang.*;
 import dalvik.system.DexClassLoader;
@@ -49,55 +50,60 @@ public class UiAutomation extends BaseUiAutomation {
 
 	//Uiobject that marks the end of launch of an application.
 	//This is workload spefific and added in the workload Java file
-	//by a method called setUserBeginObject().
-	public UiObject userBeginObject;
+	//by a method called getLaunchEndObject().
+	public UiObject launchEndObject;
 
     //Timeout to wait for application launch to finish. 
 	private Integer launch_timeout = 10;
     
 	public String applaunchType;
-	public Bundle workload_parameters;
 	public String applaunchIterations;
-
 	public ApplaunchInterface launch_workload;
 
 	//uiautomator function called by the uxperfapplaunch workload.
 	public void runUiAutomation() throws Exception{
-		workload_parameters = getParams();
 		parameters = getParams();
-		getParameters();
-		File jarFile = new File("/data/local/tmp/com.arm.wlauto.uiauto.googlephotos.jar");
-		if (jarFile.exists()) {
-			Log.d("Jarfile:", "exists");
-		}
-		else {
-			Log.d("Jarfile:", "does not exist");
-		}
-		DexClassLoader cls = new DexClassLoader(jarFile.toURI().toURL().toString(), "/data/local/tmp", null, ClassLoader.getSystemClassLoader());
 
-		//ClassLoader cl = ClassLoader.getSystemClassLoader().getParent();
+		//Get workload jar file parameters
+		String workload = parameters.getString("workload");
+		String workloadJarPath = parameters.getString("workloadJarPath");
+		String workloadJarName = String.format("com.arm.wlauto.uiauto.%1s.jar",workload);
+		String workloadJarFile = String.format("%1s/%2s",workloadJarPath, workloadJarName);
+
+        //Load the jar file
+		File jarFile = new File(workloadJarFile);
+		if(!jarFile.exists()){
+			Log.e("Jar file not found:", workloadJarFile);
+		}
+		
+		DexClassLoader classloader = new DexClassLoader(jarFile.toURI().toURL().toString(), workloadJarPath, null, ClassLoader.getSystemClassLoader());
+
 		Class uiautomation = null;
-		//PathClassLoader cls = new PathClassLoader("/sdcard/wa-working/com.arm.wlauto.uiauto.googlephotos.jar", cl);
-		Object o = null;
+		Object uiautomation_interface = null;
 		try {
-			uiautomation = cls.loadClass("com.arm.wlauto.uiauto.googlephotos.UiAutomation");
+			String workloadClass = String.format("com.arm.wlauto.uiauto.%1s.UiAutomation",workload);
+			uiautomation = classloader.loadClass(workloadClass);
 			Log.d("Canonical name:", uiautomation.getCanonicalName());
-			o = uiautomation.newInstance();
-		}catch (ClassNotFoundException e) {
-		e.printStackTrace();
+			uiautomation_interface = uiautomation.newInstance();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
 		}
-		//Method m = uiautomation.getDeclaredMethod("test", null); 
-		//Log.d("Method: ", m.toString());
-		launch_workload = ((ApplaunchInterface)o);
+		//Create an Application Interface object from the workload
+		launch_workload = ((ApplaunchInterface)uiautomation_interface);
 
+		//Get parameters for application launch
+		getParameters();
         applaunchType = parameters.getString("applaunch_type");
         applaunchIterations = parameters.getString("applaunch_iterations");
-        Log.d("Applaunch iteration number: ", applaunchIterations);
+
+		//Run the workload for application launch measurement
+    	Log.d("Applaunch jumanji: ", parameters.getString("package"));
 		runApplaunchSetup();
-		for (int i = 0; i < Integer.parseInt(applaunchIterations); i++) {
+		for (int iteration = 0; iteration < Integer.parseInt(applaunchIterations); iteration++) {
+        	Log.d("Applaunch iteration number: ", applaunchIterations);
 			sleep(20);
 			killBackground();
-			runApplaunchIteration(i);
+			runApplaunchIteration(iteration);
 			closeApplication();
 		}
 	}
@@ -108,9 +114,9 @@ public class UiAutomation extends BaseUiAutomation {
     public void runApplaunchSetup() throws Exception{
         sleep(5);
         setScreenOrientation(ScreenOrientation.NATURAL);
-        launch_workload.setWorkloadParameters(workload_parameters);
-		userBeginObject = launch_workload.getUserBeginObject();
-        launch_workload.clearDialogues();
+        launch_workload.setWorkloadParameters(parameters);
+        launch_workload.runApplicationInitialization();
+		launchEndObject = launch_workload.getLaunchEndObject();
         unsetScreenOrientation();
         closeApplication();
 	}
@@ -127,7 +133,8 @@ public class UiAutomation extends BaseUiAutomation {
     
     /*
      * AppLaunch class implements methods that facilitates launching applications
-	 * from the uiautomator.
+	 * from the uiautomator. It has methods that are used for one complete iteration of application
+	 * launch instrumentation.
      * ActionLogger class is instantiated within the class for measuring applaunch time.
      * startLaunch(): Marks the beginning of the application launch, starts Timer
      * endLaunch(): Marks the end of application, ends Timer
@@ -158,7 +165,7 @@ public class UiAutomation extends BaseUiAutomation {
 
         //Marks the end of application launch of the workload.
         public void endLaunch() throws Exception{
-            waitObject(userBeginObject, launch_timeout);
+            waitObject(launchEndObject, launch_timeout);
             logger.stop();
             launch_p.destroy();
         }

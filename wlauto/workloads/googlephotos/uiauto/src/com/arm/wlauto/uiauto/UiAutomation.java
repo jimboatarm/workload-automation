@@ -38,20 +38,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-//public class UiAutomation extends UxPerfUiAutomation {
 public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterface{
 
     private long viewTimeout =  TimeUnit.SECONDS.toMillis(10);
 
     public void runUiAutomation() throws Exception {
         parameters = getParams();
-        packageName = parameters.getString("package");
-        packageID = packageName + ":id/";
 
         sleep(5); // Pause while splash screen loads
         setScreenOrientation(ScreenOrientation.NATURAL);
-        dismissWelcomeView();
-        closePromotionPopUp();
+		runApplicationInitialization();
 
         selectGalleryFolder("wa-1");
         selectFirstImage();
@@ -79,18 +75,18 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
     }
 
 	//Clear the initial run dialogues of the application launch.
-	public void clearDialogues() throws Exception {
+	public void runApplicationInitialization() throws Exception {
         getParameters();
         dismissWelcomeView();
         closePromotionPopUp();
     }
 
     
-	//Sets the UiObject that marsk teh end of the application launch.
-	public UiObject getUserBeginObject() {
-		UiObject userBeginObject = new UiObject(new UiSelector().textContains("Photos")
+	//Sets the UiObject that marks the end of the application launch.
+	public UiObject getLaunchEndObject() {
+		UiObject launchEndObject = new UiObject(new UiSelector().textContains("Photos")
                                          .className("android.widget.TextView"));
-		return userBeginObject;
+		return launchEndObject;
 	}
     
 	//Returns the launch command for the application.
@@ -102,15 +98,10 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
         else {
             launch_command = String.format("am start -n %s/%s", packageName, activityName);
         }
-
-            //launch_command = String.format("am start -a %s -d %s", actionName, dataURI);
-
 		return launch_command;
     }
     
     public void setWorkloadParameters(Bundle workload_parameters) {
-    //public void setWorkloadParameters() {
-		Log.d("workload", "parameters");
 		parameters = workload_parameters;
     }
 

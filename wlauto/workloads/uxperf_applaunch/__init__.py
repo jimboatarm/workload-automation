@@ -112,6 +112,9 @@ class UxperfApplaunch(AndroidUxPerfWorkload):
                   Number of iterations of the application launch
                   """),
     ]
+    
+    #Path where the workload jar file will be pushed on device
+    workload_jar_path = "/data/local/tmp" 
 
     def __init__(self, device, **kwargs):
         super(UxperfApplaunch, self).__init__(device, **kwargs)
@@ -122,7 +125,18 @@ class UxperfApplaunch(AndroidUxPerfWorkload):
 
     def init_resources(self, context):
         super(UxperfApplaunch, self).init_resources(context)
-        self.workload.init_resources(context)
+        self.init_workload_resources(context)
+
+    def init_workload_resources(self, context):
+        self.workload.uiauto_file = context.resolver.get(wlauto.common.android.resources.JarFile(self.workload))
+        print self.workload.uiauto_file
+        if not self.workload.uiauto_file:
+            raise ResourceError('No UI automation JAR file found for workload {}.'.format(self.workload.name))
+        self.workload.device_uiauto_file = self.device.path.join(self.workload_jar_path,
+                                                        os.path.basename(self.workload.uiauto_file))
+        print self.workload.device_uiauto_file
+        if not self.workload.uiauto_package:
+            self.workload.uiauto_package = os.path.splitext(os.path.basename(self.workload.uiauto_file))[0]
 
     def validate(self):
         super(UxperfApplaunch, self).validate()
@@ -130,8 +144,10 @@ class UxperfApplaunch(AndroidUxPerfWorkload):
         self.pass_parameters()
 
     def pass_parameters(self):
+        self.uiauto_params['workload'] = self.workload.name
+        self.uiauto_params['workloadJarPath'] = self.workload_jar_path
         self.uiauto_params['package'] = self.workload.package
-        self.uiauto_params.update(self.workload_params)
+        self.uiauto_params.update(self.workload.uiauto_params)
         if self.workload.activity:
             self.uiauto_params['launch_activity'] = self.workload.activity
         else:
@@ -144,7 +160,7 @@ class UxperfApplaunch(AndroidUxPerfWorkload):
         if not self.workload.launch_main:  # Required for launching skype
             self.workload.launch_app()
         UiAutomatorWorkload.setup(self, context)
-        self.workload.device.push_file(self.workload.uiauto_file, "/data/local/tmp/")
+        self.workload.device.push_file(self.workload.uiauto_file, self.workload.device_uiauto_file)
 
     def run(self, context):
         UiAutomatorWorkload.run(self, context)
@@ -152,5 +168,7 @@ class UxperfApplaunch(AndroidUxPerfWorkload):
     def teardown(self,context):
         AndroidBenchmark.teardown(self.workload, context)
         UiAutomatorWorkload.teardown(self.workload, context)
+        self.workload.device_uiauto_dex_file = self.workload.device_uiauto_file.replace(".jar",".dex") 
+        self.workload.device.delete_file(self.workload.device_uiauto_dex_file)
         super(UxperfApplaunch, self).teardown(context)
 

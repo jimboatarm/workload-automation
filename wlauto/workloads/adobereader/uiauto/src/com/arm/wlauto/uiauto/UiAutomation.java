@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-//public class UiAutomation extends UxPerfUiAutomation {
 public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterface{
 
 
@@ -45,16 +44,14 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
 
     public void runUiAutomation() throws Exception {
         parameters = getParams();
-        packageName = parameters.getString("package");
-        packageID = packageName + ":id/";
 
         String filename = parameters.getString("filename").replace("0space0", " ");
         String[] searchStrings =
             parameters.getString("search_string_list").replace("0space0", " ").split("0newline0");
 
         setScreenOrientation(ScreenOrientation.NATURAL);
+        runApplicationInitialization();
 
-        dismissWelcomeView();
         openFile(filename);
         gesturesTest();
         searchPdfTest(searchStrings);
@@ -63,18 +60,18 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
         unsetScreenOrientation();
     }
 	
-	//Clear the initial run dialogues of the application launch.
-	public void clearDialogues() throws Exception {
+	//Get application parameters and clear the initial run dialogues of the application launch.
+	public void runApplicationInitialization() throws Exception {
         getParameters();
         dismissWelcomeView();
     }
 
     
-	//Sets the UiObject that marsk teh end of the application launch.
-	public UiObject getUserBeginObject() {
-		UiObject userBeginObject = new UiObject(new UiSelector().textContains("RECENT")
+	//Sets the UiObject that marks the end of the application launch.
+	public UiObject getLaunchEndObject() {
+		UiObject launchEndObject = new UiObject(new UiSelector().textContains("RECENT")
                                          .className("android.widget.TextView"));
-		return userBeginObject;
+		return launchEndObject;
 	}
     
 	//Returns the launch command for the application.
@@ -87,14 +84,11 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
             launch_command = String.format("am start -n %s/%s", packageName, activityName);
         }
 
-            //launch_command = String.format("am start -a %s -d %s", actionName, dataURI);
-
 		return launch_command;
     }
     
+	//Pass the workload parameters, used for applaunch
     public void setWorkloadParameters(Bundle workload_parameters) {
-    //public void setWorkloadParameters() {
-		Log.d("workload", "parameters");
 		parameters = workload_parameters;
     }
 

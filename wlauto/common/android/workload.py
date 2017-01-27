@@ -109,7 +109,7 @@ class UiAutomatorWorkload(Workload):
     def run(self, context):
         result = self.device.execute(self.command, self.run_timeout)
         if 'FAILURE' in result:
-            raise WorkloadError(result)
+			raise WorkloadError(result)
         else:
             self.logger.debug(result)
         time.sleep(DELAY)

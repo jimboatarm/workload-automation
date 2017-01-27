@@ -53,7 +53,6 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
         packageName = parameters.getString("package");
         activityName = parameters.getString("launch_activity");
         packageID = packageName + ":id/";
-
     }
 
     public long uiAutoTimeout = TimeUnit.SECONDS.toMillis(4);

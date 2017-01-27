@@ -16,6 +16,7 @@
 package com.arm.wlauto.uiauto.skype;
 
 import android.os.Bundle;
+import android.util.Log;
 
 // Import the uiautomator libraries
 import com.android.uiautomator.core.UiObject;
@@ -24,6 +25,7 @@ import com.android.uiautomator.core.UiSelector;
 import com.android.uiautomator.core.UiWatcher;
 
 import com.arm.wlauto.uiauto.UxPerfUiAutomation;
+import com.arm.wlauto.uiauto.ApplaunchInterface;
 
 import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_ID;
 import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_TEXT;
@@ -31,25 +33,18 @@ import static com.arm.wlauto.uiauto.BaseUiAutomation.FindByCriteria.BY_DESC;
 
 import java.util.concurrent.TimeUnit;
 
-public class UiAutomation extends UxPerfUiAutomation {
-
-    public Bundle parameters;
-    public String packageName;
-    public String packageID;
+public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterface{
 
     public static final String ACTION_VOICE = "voice";
     public static final String ACTION_VIDEO = "video";
 
     public void runUiAutomation() throws Exception {
-        // Override superclass value
+        
+		parameters = getParams();
+        
+		// Override superclass value
         this.uiAutoTimeout = TimeUnit.SECONDS.toMillis(10);
 
-        parameters = getParams();
-        packageName = parameters.getString("package");
-        packageID = packageName + ":id/";
-
-        String loginName = parameters.getString("my_id");
-        String loginPass = parameters.getString("my_pwd");
         String contactName = parameters.getString("name").replace("0space0", " ");
         int callDuration = Integer.parseInt(parameters.getString("duration"));
         String callType = parameters.getString("action");
@@ -57,13 +52,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         setScreenOrientation(ScreenOrientation.NATURAL);
 
-        UiWatcher infoPopUpWatcher = createInfoPopUpWatcher();
-        registerWatcher("infoPopUpWatcher", infoPopUpWatcher);
-        runWatchers();
-
         // Run tests
-        handleLoginScreen(loginName, loginPass);
-        dismissUpdatePopupIfPresent();
+		runApplicationInitialization();
         searchForContact(contactName);
 
         if (ACTION_VOICE.equalsIgnoreCase(callType)) {
@@ -74,6 +64,39 @@ public class UiAutomation extends UxPerfUiAutomation {
 
         removeWatcher("infoPopUpWatcher");
         unsetScreenOrientation();
+    }
+	
+	//Get application parameters and clear the initial run dialogues of the application launch.
+	public void runApplicationInitialization() throws Exception {
+        getParameters();
+        UiWatcher infoPopUpWatcher = createInfoPopUpWatcher();
+        registerWatcher("infoPopUpWatcher", infoPopUpWatcher);
+        runWatchers();
+        String loginName = parameters.getString("my_id");
+        String loginPass = parameters.getString("my_pwd");
+        handleLoginScreen(loginName, loginPass);
+        dismissUpdatePopupIfPresent();
+    }
+
+    
+	//Sets the UiObject that marks the end of the application launch.
+	public UiObject getLaunchEndObject() {
+		UiObject launchEndObject = new UiObject(new UiSelector().resourceId(packageID + "menu_search"));
+		return launchEndObject;
+	}
+    
+	//Returns the launch command for the application.
+    public String getLaunchCommand() {
+		String launch_command;
+		String actionName = "android.intent.action.VIEW";
+		String dataURI = "skype:dummy?dummy";
+		launch_command = String.format("am start -a %s -d %s", actionName, dataURI);	
+		return launch_command;
+    }
+    
+	//Pass the workload parameters, used for applaunch
+    public void setWorkloadParameters(Bundle workload_parameters) {
+		parameters = workload_parameters;
     }
 
     public void handleLoginScreen(String username, String password) throws Exception {
