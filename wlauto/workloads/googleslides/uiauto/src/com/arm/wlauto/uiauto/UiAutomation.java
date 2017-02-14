@@ -86,11 +86,21 @@ public class UiAutomation extends UxPerfUiAutomation {
         }
     }
 	
+<<<<<<< HEAD
     public void dismissUpdateDialog() throws Exception {
 	UiObject update = 
 		new UiObject(new UiSelector().textContains("App update recommended"));
 	if (update.waitForExists(WAIT_TIMEOUT_1SEC)) {
 		clickUiObject(BY_TEXT, "Dismiss");			
+=======
+	public void dismissUpdateDialog() throws Exception {
+		UiObject update = 
+			new UiObject(new UiSelector().textContains("App update recommended"));
+		if (update.waitForExists(WAIT_TIMEOUT_1SEC)) {
+			UiObject dismiss =
+			    new UiObject(new UiSelector().textContains("Dismiss"));
+			dismiss.click();			
+>>>>>>> 20e72eb... UXPERF-308: Including .JAR file that was previously missed.
 		}
 	}
 
@@ -111,12 +121,6 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 
     public void insertSlide(String slideLayout) throws Exception {
-        //Window the application in order to bypass UXPERF-273 until this issue can be fixed by Google.
-        UiObject window =
-                new UiObject(new UiSelector().resourceId("android:id/restore_window"));
-        if (window.waitForExists(WAIT_TIMEOUT_1SEC)){
-            window.click();
-        }
         clickUiObject(BY_DESC, "Add slide", true);
         clickUiObject(BY_TEXT, slideLayout, true);
     }
@@ -457,8 +461,12 @@ public class UiAutomation extends UxPerfUiAutomation {
     private void tapOpenArea() throws Exception {
         UiObject openArea = getUiObjectByResourceId(packageID + "punch_view_pager");
         Rect bounds = openArea.getVisibleBounds();
+<<<<<<< HEAD
 	// 10px from top of view, 10px from the right edge
         tapDisplay(bounds.right -10, bounds.top + 10);
+=======
+        // 10px from top of view, 10px from the right edge
+>>>>>>> 20e72eb... UXPERF-308: Including .JAR file that was previously missed.
     }
 
     public void windowApplication() throws Exception {
