@@ -87,11 +87,15 @@ public class UiAutomation extends UxPerfUiAutomation {
     }
 	
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0aa2a9d... Refactored based on review comments
     public void dismissUpdateDialog() throws Exception {
 	UiObject update = 
 		new UiObject(new UiSelector().textContains("App update recommended"));
 	if (update.waitForExists(WAIT_TIMEOUT_1SEC)) {
 		clickUiObject(BY_TEXT, "Dismiss");			
+<<<<<<< HEAD
 =======
 	public void dismissUpdateDialog() throws Exception {
 		UiObject update = 
@@ -101,6 +105,8 @@ public class UiAutomation extends UxPerfUiAutomation {
 			    new UiObject(new UiSelector().textContains("Dismiss"));
 			dismiss.click();			
 >>>>>>> 20e72eb... UXPERF-308: Including .JAR file that was previously missed.
+=======
+>>>>>>> 0aa2a9d... Refactored based on review comments
 		}
 	}
 
@@ -462,11 +468,16 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject openArea = getUiObjectByResourceId(packageID + "punch_view_pager");
         Rect bounds = openArea.getVisibleBounds();
 <<<<<<< HEAD
+<<<<<<< HEAD
 	// 10px from top of view, 10px from the right edge
         tapDisplay(bounds.right -10, bounds.top + 10);
 =======
         // 10px from top of view, 10px from the right edge
 >>>>>>> 20e72eb... UXPERF-308: Including .JAR file that was previously missed.
+=======
+	// 10px from top of view, 10px from the right edge
+        tapDisplay(bounds.right -10, bounds.top + 10);
+>>>>>>> 0aa2a9d... Refactored based on review comments
     }
 
     public void windowApplication() throws Exception {
