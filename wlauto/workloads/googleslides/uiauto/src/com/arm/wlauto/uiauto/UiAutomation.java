@@ -62,8 +62,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         // UI automation begins here
         skipWelcomeScreen();
         sleep(1);
-		dismissUpdateDialog();
-		sleep(1);
+	dismissUpdateDialog();
+	sleep(1);
         dismissWorkOfflineBanner();
         sleep(1);
         enablePowerpointCompat();
@@ -211,8 +211,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         logger.start();
         clickUiObject(BY_DESC, "New presentation");
         clickUiObject(BY_TEXT, "New PowerPoint", true);
-        logger.stop();
-		dismissUpdateDialog();
+	logger.stop();
+	dismissUpdateDialog();
     }
 
     public void saveDocument(String docName) throws Exception {
@@ -303,7 +303,6 @@ public class UiAutomation extends UxPerfUiAutomation {
     protected void enablePowerpointCompat() throws Exception {
         String testTag = "enable_pptmode";
         ActionLogger logger = new ActionLogger(testTag, parameters);
-
         logger.start();
         clickUiObject(BY_DESC, "drawer");
         clickUiObject(BY_TEXT, "Settings", true);
@@ -450,7 +449,7 @@ public class UiAutomation extends UxPerfUiAutomation {
     private void tapOpenArea() throws Exception {
         UiObject openArea = getUiObjectByResourceId(packageID + "punch_view_pager");
         Rect bounds = openArea.getVisibleBounds();
-		// 10px from top of view, 10px from the right edge
+	// 10px from top of view, 10px from the right edge
         tapDisplay(bounds.right - 10, bounds.top + 10);
     }
 
