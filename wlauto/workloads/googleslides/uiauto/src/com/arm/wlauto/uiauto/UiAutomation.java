@@ -62,8 +62,8 @@ public class UiAutomation extends UxPerfUiAutomation {
         // UI automation begins here
         skipWelcomeScreen();
         sleep(1);
-    dismissUpdateDialog();
-    sleep(1);
+		dismissUpdateDialog();
+		sleep(1);
         dismissWorkOfflineBanner();
         sleep(1);
         enablePowerpointCompat();
@@ -91,7 +91,6 @@ public class UiAutomation extends UxPerfUiAutomation {
         new UiObject(new UiSelector().textContains("App update recommended"));
     if (update.waitForExists(WAIT_TIMEOUT_1SEC)) {
         clickUiObject(BY_TEXT, "Dismiss");          
-
         }
     }
 
@@ -209,12 +208,11 @@ public class UiAutomation extends UxPerfUiAutomation {
     public void newDocument() throws Exception {
         String testTag = "document_new";
         ActionLogger logger = new ActionLogger(testTag, parameters);
-
         logger.start();
         clickUiObject(BY_DESC, "New presentation");
         clickUiObject(BY_TEXT, "New PowerPoint", true);
-    dismissUpdateDialog();
         logger.stop();
+		dismissUpdateDialog();
     }
 
     public void saveDocument(String docName) throws Exception {
@@ -452,8 +450,8 @@ public class UiAutomation extends UxPerfUiAutomation {
     private void tapOpenArea() throws Exception {
         UiObject openArea = getUiObjectByResourceId(packageID + "punch_view_pager");
         Rect bounds = openArea.getVisibleBounds();
-    // 10px from top of view, 10px from the right edge
-        tapDisplay(bounds.right -10, bounds.top + 10);
+		// 10px from top of view, 10px from the right edge
+        tapDisplay(bounds.right - 10, bounds.top + 10);
     }
 
     public void windowApplication() throws Exception {
