@@ -70,32 +70,64 @@ public class BaseUiAutomation extends UiAutomatorTestCase {
      * message consists of a name for the action and a timestamp. The timestamp
      * is separated by a single space from the name of the action.
      *
+     *
+     * ActionType type:
+     * CONNECT - Action relies on creating or ending a connection to something
+     *           E.g. Skype initialising/hanging up a video or voice call
+     * FILE    - Action (perceivedly) performs a file operation
+     *           E.g. Load existing, Create new, Save, Close
+     * FLING   - A fast scroll or other swipe gesture that adds velocity
+     *           E.g. Flinging down a list, where it continues to animate even after release
+     * MODIFY  - Action that performs some kind of modification that may be intensive
+     *           E.g. Insert Image/shape into document
+     * SEARCH  - Action performs a search
+     *           E.g. Text search in a document
+     * TRACK   - Action that tracks the gesture input
+     *           E.g. A pinch to zoom
+     * VIDEO   - Action is a video/camera feed
+     *           E.g. Playing a video
+     * VIEW    - Action causes a view to change on screen
+     *           E.g. Clicking a button that causes a new view to appear on screen
+     *
+     * String label:
+     * A unique label that describes (in as few characters as possible)
+     * the action being performed. Spaces and underscores are stripped.
+     *
+     * Bundle parameters:
+     * Used only to check whether `markers_enabled` is True or False
+     *
+     *
      * Typical usage:
      *
-     * ActionLogger logger = ActionLogger("testTag", parameters);
+     * ActionLogger logger = ActionLogger(ActionType.TRACK, "scrolldown", parameters);
      * logger.start();
-     * // actions to be recorded
+     * // action to record
      * logger.stop();
      */
+    public enum ActionType { CONNECT, FILE, FLING, MODIFY, SEARCH, TRACK, VIDEO, VIEW };
+
     public class ActionLogger {
 
-        private String testTag;
+        private static final String tag = "UX_PERF";
+        private String label;
         private boolean enabled;
 
-        public ActionLogger(String testTag, Bundle parameters) {
-            this.testTag = testTag;
+        public ActionLogger(ActionType type, String label, Bundle parameters) {
             this.enabled = Boolean.parseBoolean(parameters.getString("markers_enabled"));
+            if (this.enabled) {
+                this.label = type.toString() + "_" + label.replace(" ", "").replace("_", "");
+            }
         }
 
         public void start() {
             if (enabled) {
-                Log.d("UX_PERF", testTag + "_start " + System.currentTimeMillis());
+                Log.d(tag, label + "_start " + System.nanoTime());
             }
         }
 
         public void stop() throws Exception {
             if (enabled) {
-                Log.d("UX_PERF", testTag + "_end " + System.currentTimeMillis());
+                Log.d(tag, label + "_end " + System.nanoTime());
             }
         }
     }
