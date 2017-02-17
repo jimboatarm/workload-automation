@@ -452,7 +452,19 @@ public class UiAutomation extends UxPerfUiAutomation {
         UiObject openArea = getUiObjectByResourceId(packageID + "punch_view_pager");
         Rect bounds = openArea.getVisibleBounds();
     // 10px from top of view, 10px from the right edge
+<<<<<<< HEAD
         tapDisplay(bounds.right - 10, bounds.top + 10);
+=======
+        tapDisplay(bounds.right -10, bounds.top + 10);
+    }
+
+    public void windowApplication() throws Exception {
+        UiObject window =
+                new UiObject(new UiSelector().resourceId("android:id/restore_window"));
+        if (window.waitForExists(WAIT_TIMEOUT_1SEC)){
+            window.click();
+        }
+>>>>>>> c0d1559e36af46e557a7d512b10eaeb45276a2ea
     }
 
     public void windowApplication() throws Exception {

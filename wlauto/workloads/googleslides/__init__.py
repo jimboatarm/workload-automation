@@ -24,9 +24,13 @@ class GoogleSlides(AndroidUxPerfWorkload):
     name = 'googleslides'
     package = 'com.google.android.apps.docs.editors.slides'
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     min_apk_version = '1.7.032.06'
 >>>>>>> Refactored based on review comments
+=======
+    min_apk_version = '1.7.032.06'
+>>>>>>> c0d1559e36af46e557a7d512b10eaeb45276a2ea
     activity = ''
     view = [package + '/com.google.android.apps.docs.quickoffice.filepicker.FilePickerActivity',
             package + '/com.google.android.apps.docs.editors.shared.filepicker.FilePickerActivity',
