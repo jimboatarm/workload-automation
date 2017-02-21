@@ -122,8 +122,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
     }
 
     private void openFile(final String filename) throws Exception {
-        String testTag = "open_document";
-        ActionLogger logger = new ActionLogger(testTag, parameters);
+        ActionLogger logger = new ActionLogger(ActionType.FILE, "openPDF", parameters);
 
         // Select the local files list from the My Documents view
         clickUiObject(BY_TEXT, "LOCAL", "android.widget.TextView");
@@ -165,19 +164,15 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
     }
 
     private void gesturesTest() throws Exception {
-        String testTag = "gesture";
-
         // Perform a range of swipe tests at different speeds and on different views
         LinkedHashMap<String, GestureTestParams> testParams = new LinkedHashMap<String, GestureTestParams>();
-        testParams.put("swipe_up", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.UP, 100));
-        testParams.put("swipe_down", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.DOWN, 100));
-        testParams.put("swipe_right", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.RIGHT, 50));
-        testParams.put("swipe_left", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.LEFT, 50));
-        testParams.put("pinch_out", new GestureTestParams(GestureType.PINCH, PinchType.OUT, 100, 50));
-        testParams.put("pinch_in", new GestureTestParams(GestureType.PINCH, PinchType.IN, 100, 50));
-
-        Iterator<Entry<String, GestureTestParams>> it = testParams.entrySet().iterator();
-
+        testParams.put("scrollDown", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.UP, 100));
+        testParams.put("scrollUp", new GestureTestParams(GestureType.UIDEVICE_SWIPE, Direction.DOWN, 100));
+        testParams.put("showMenu", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.RIGHT, 50));
+        testParams.put("hideMenu", new GestureTestParams(GestureType.UIOBJECT_SWIPE, Direction.LEFT, 50));
+        testParams.put("zoomIn", new GestureTestParams(GestureType.PINCH, PinchType.OUT, 100, 50));
+        testParams.put("zoomOut", new GestureTestParams(GestureType.PINCH, PinchType.IN, 100, 50));
+ 
         // On some devices the first device swipe is ignored so perform it here
         // to prevent the first test gesture from being incorrectly logged
         uiDeviceSwipe(Direction.DOWN, 200);
@@ -188,6 +183,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
             throw new UiObjectNotFoundException("Could not find page view");
         }
 
+        Iterator<Entry<String, GestureTestParams>> it = testParams.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<String, GestureTestParams> pair = it.next();
             GestureType type = pair.getValue().gestureType;
@@ -196,8 +192,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
             int steps = pair.getValue().steps;
             int percent = pair.getValue().percent;
 
-            String runName = String.format(testTag + "_" + pair.getKey());
-            ActionLogger logger = new ActionLogger(runName, parameters);
+            ActionLogger logger = new ActionLogger(ActionType.TRACK, pair.getKey(), parameters);
             logger.start();
 
             switch (type) {
@@ -219,8 +214,6 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
     }
 
     private void searchPdfTest(final String[] searchStrings) throws Exception {
-        String testTag = "search";
-
         // Tap the centre to bring up the menu gui
         // Sometimes the first tap wont register, so check if search appears
         // and if not, tap again before continuing
@@ -240,8 +233,7 @@ public class UiAutomation extends UxPerfUiAutomation implements ApplaunchInterfa
         }
 
         for (int i = 0; i < searchStrings.length; i++) {
-            String runName = String.format(testTag + "_string" + i);
-            ActionLogger logger = new ActionLogger(runName, parameters);
+            ActionLogger logger = new ActionLogger(ActionType.SEARCH, "pdfString" + i, parameters);
 
             // Click on the search button icon and enter text in the box.  This closes the keyboard
             // so click the box again and press Enter to start the search.
