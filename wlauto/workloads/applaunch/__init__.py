@@ -103,9 +103,6 @@ class Applaunch(AndroidUxPerfWorkload):
                   """),
     ]
 
-    def __init__(self, device, **kwargs):
-        super(Applaunch, self).__init__(device, **kwargs)
-
     def init_resources(self, context):
         super(Applaunch, self).init_resources(context)
         loader = ExtensionLoader(packages=settings.extension_packages, paths=settings.extension_paths)
@@ -140,6 +137,7 @@ class Applaunch(AndroidUxPerfWorkload):
         self.uiauto_params['applaunch_iterations'] = self.applaunch_iterations
 
     def setup(self, context):
+        self.ux_setup()
         AndroidBenchmark.setup(self.workload, context)
         if not self.workload.launch_main:
             self.workload.launch_app()
@@ -161,3 +159,81 @@ class Applaunch(AndroidUxPerfWorkload):
         super(Applaunch, self).teardown(context)
         AndroidBenchmark.teardown(self.workload, context)
         UiAutomatorWorkload.teardown(self.workload, context)
+        self.ux_teardown(context)
+
+    #####################
+    # CODE BELOW IS WIP #
+    #####################
+    run_timeout = 60 * 60
+    uxTracing = 'PIDS'
+    uxTimer = 10
+    pmuCounters = {'little': ['r11', 'r8', 'r12', 'r10', 'r14',
+                              'r1', 'r4', 'r3', 'r16', 'r17',
+                              're1', 're0', 're4', 're5', 're6',
+                              're7', 're8'],
+                   'big': ['r11', 'r8', 'r12', 'r10', 'r14',
+                           'r1', 'r4', 'r3', 'r16', 'r17',
+                           'r2', 'r5', 'r15', 'r19', 'r40',
+                           'r41', 'r50', 'r51', 'r56', 'r57',
+                           'r58', 'rc0', 'rc1', 'rd3', 'rd8',
+                           'rd9', 'rda']}
+    # pidCommon = ['system_server', '/system/bin/surfaceflinger']
+    # pidTargets = {'launch_from_background':
+    #               {'adobereader': pidCommon + ['com.adobe.reader'],
+    #                'googleplaybooks': pidCommon + ['com.google.android.apps.books', 'com.google.android.gms.ui', 'com.android.systemui']},
+    #               'launch_from_long-idle':
+    #               {'adobereader': pidCommon + ['com.adobe.reader'],
+    #                'googleplaybooks': pidCommon + ['com.google.android.apps.books', 'com.google.process.gapps']}}
+    # tidCommon = ['android.displaysystem_server', 'surfaceflinger /system/bin/surfaceflinger']
+    # tidTargets = {'launch_from_background':
+    #               {'adobereader': tidCommon + ['RenderThread   com.adobe.reader', 'om.adobe.readercom.adobe.reader'],
+    #                'googleplaybooks': tidCommon + ['ndroid.systemuicom.android.systemui', 'BooksImageManagcom.google.android.apps.books', 'HeapTaskDaemon com.google.android.apps.books', 'Jit thread poolcom.google.android.apps.books', 'RenderThread   com.google.android.apps.books', 'roid.apps.bookscom.google.android.apps.books', '.android.gms.uicom.google.android.gms.ui', 'Jit thread poolcom.google.android.gms.ui']},
+    #               'launch_from_long-idle':
+    #               {'adobereader': tidCommon + ['Chrome_InProcGpcom.adobe.reader', 'Chrome_InProcRecom.adobe.reader', 'HeapTaskDaemon com.adobe.reader', 'RenderThread   com.adobe.reader', 'om.adobe.readercom.adobe.reader', 'pool-5-thread-1com.adobe.reader', 'pool-5-thread-2com.adobe.reader', 'android.bg     system_server'],
+    #                'googleplaybooks': tidCommon + ['AsyncTask #1   com.google.android.apps.books', 'AsyncTask #4   com.google.android.apps.books', 'BooksImageManagcom.google.android.apps.books', 'HeapTaskDaemon com.google.android.apps.books', 'Jit thread poolcom.google.android.apps.books', 'RenderThread   com.google.android.apps.books', 'pool-1-thread-1com.google.android.apps.books', 'roid.apps.bookscom.google.android.apps.books', 'e.process.gappscom.google.process.gapps', 'HeapTaskDaemon system_server']}}
+    pidTargets = {'launch_from_long-idle':
+                  {'adobereader': ['system_server', 'com.google.android.googlequicksearchbox:search', 'com.adobe.reader', 'com.android.systemui', 'com.android.vending'],
+                   'googleplaybooks': ['system_server', 'com.google.android.googlequicksearchbox:search', 'com.google.android.apps.books'],
+                   'googlephotos': ['system_server', 'com.google.android.googlequicksearchbox:search', 'com.google.android.apps.photos']}}
+    tidTargets = {'launch_from_long-idle':
+                  {'adobereader': ['HeapTaskDaemon com.adobe.reader', 'Jit thread poolcom.adobe.reader', 'RenderThread   com.adobe.reader', 'om.adobe.readercom.adobe.reader', 'pool-4-thread-1com.adobe.reader', 'pool-4-thread-2com.adobe.reader', 'RenderThread   com.android.systemui', 'ndroid.systemuicom.android.systemui', 'android.vendingcom.android.vending', 'HeapTaskDaemon com.google.android.googlequicksearchbox:search', 'HeapTaskDaemon system_server', 'android.bg     system_server'],
+                   'googleplaybooks': ['AsyncTask #1   com.google.android.apps.books', 'BooksImageManagcom.google.android.apps.books', 'HeapTaskDaemon com.google.android.apps.books', 'Jit thread poolcom.google.android.apps.books', 'pool-1-thread-1com.google.android.apps.books', 'roid.apps.bookscom.google.android.apps.books', 'gle.android.gmscom.google.android.gms', 'HeapTaskDaemon com.google.android.googlequicksearchbox:search', 'HeapTaskDaemon system_server', 'android.displaysystem_server'],
+                   'googlephotos': ['Jit thread poolcom.google.android.apps.photos', 'RenderThread   com.google.android.apps.photos', 'oid.apps.photoscom.google.android.apps.photos', 'HeapTaskDaemon com.google.android.googlequicksearchbox:search', 'HeapTaskDaemon system_server', 'android.bg     system_server', 'android.displaysystem_server']}}
+
+    def ux_setup(self):
+        # Setup device into test mode
+        if 'set_test_mode' in dir(self.device):
+            self.device.set_test_mode()
+        # Clean and create output directory on device
+        results = self.device.path.join(self.device.working_directory, 'uxtracing')
+        self.device.delete_file(results)
+        self.device.execute('mkdir -p ' + results)
+        if self.uxTracing == 'PIDS':
+            self.uiauto_params['pmu_targets'] = self.pidTargets[self.applaunch_type][self.workload_name]
+        elif self.uxTracing == 'TIDS':
+            self.uiauto_params['pmu_targets'] = self.tidTargets[self.applaunch_type][self.workload_name]
+        self.uiauto_params['uxperf_timer'] = self.uxTimer
+        self.uiauto_params['uxperf_tracing'] = self.uxTracing
+        # PMU counters start multiplexing after 6 counters, which we dont want to happen
+        # It has been observed for some processes, even 6 can fail
+        # Thus split the list of counters into groups of 5
+        pmuList = self.pmuCounters['big']
+        pmuList = [','.join(x) for x in (pmuList[i:i + 5] for i in range(0, len(pmuList), 5))]
+        self.uiauto_params['pmu_counters'] = pmuList
+
+    def ux_teardown(self, context):
+        # Setup device back to normal
+        if 'set_normal_mode' in dir(self.device):
+            self.device.set_normal_mode()
+        # Pull results
+        results = self.device.path.join(self.device.working_directory, 'uxtracing')
+        self.device.pull_file(results, context.output_directory)
+        # Special extra stuff for systrace files
+        resultdir = os.path.join(context.output_directory, 'uxtracing')
+        for f in os.listdir(resultdir):
+            if ('atrace' in f) and f.endswith('.txt'):
+                spath = os.path.join(os.environ['ANDROID_HOME'], 'platform-tools', 'systrace', 'systrace.py')
+                sfile = os.path.join(resultdir, f)
+                shtml = os.path.splitext(sfile)[0] + '.html'
+                os.system('{} --from-file {} -o {}'.format(spath, sfile, shtml))
+    #####################

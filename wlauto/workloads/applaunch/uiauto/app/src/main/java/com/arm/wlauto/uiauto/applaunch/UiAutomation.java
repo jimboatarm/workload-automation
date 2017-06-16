@@ -15,6 +15,7 @@
 
 package com.arm.wlauto.uiauto.applaunch;
 
+import android.os.Bundle;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObject;
 import android.util.Log;
@@ -26,8 +27,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import dalvik.system.DexClassLoader;
+
+import java.util.Arrays;
+import java.util.HashSet;
+
+import javax.net.ssl.ExtendedSSLSession;
+
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.logging.AtraceLogger;
 
 
 @RunWith(AndroidJUnit4.class)
@@ -44,6 +55,143 @@ public class UiAutomation extends UxPerfUiAutomation {
     public int applaunchIterations;
     public String activityName;
     public ApplaunchInterface launch_workload;
+
+    /* CODE BELOW IS WIP */
+    /* [INPUT] Define what type of tracing to do:
+     * UTIL - Find the process and thread names by running 'top'
+     * PERF - Collect pmu counters by using 'perf'
+     * ATRACE - Collect systrace captures by using 'atrace'
+     */
+    private String uxTracing;
+    // [INPUT] Define how long to run commands for, if time based
+    private int uxTimer;
+
+    private Process uxProcess;
+    private AtraceLogger uxAtrace;    
+    private String[] pmuCounters;
+    private String[] pmuTargets;
+    
+    private Process execRoot(String command) throws Exception{
+        Log.d("Executing as root", command);
+        return Runtime.getRuntime().exec(new String[] { "su", "-c", command});
+    }
+
+    private String execRootOutput(String command) throws Exception{
+        Process proc = execRoot(command);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+        int read;
+        char[] buffer = new char[4096];
+        StringBuffer output = new StringBuffer();
+        while ((read = reader.read(buffer)) > 0) {
+            output.append(buffer, 0, read);
+        }
+        reader.close();
+        proc.waitFor();
+        proc.destroy();
+        return output.toString().trim();
+    }
+    
+    private void uxTracingSetup() throws Exception{
+        uxTracing = parameters.getString("uxperf_tracing").toUpperCase();
+        uxTimer = parameters.getInt("uxperf_timer");
+        switch (uxTracing) {
+            case "UTIL":
+                /* In order to get the list of hot PIDS, we need to use top... */
+                sleep(20);
+                killBackground();
+                String topCmd = String.format("top -H -s cpu -d 1 -n %d > %s/uxtracing/top_baseline.txt 2>&1",
+                                               uxTimer, parameters.getString("workdir"));
+                Process topProc = execRoot(topCmd);
+                topProc.waitFor();
+                topProc.destroy();
+                break;
+            case "PIDS":
+            case "TIDS":
+                pmuCounters = parameters.getStringArray("pmu_counters");
+                pmuTargets = parameters.getStringArray("pmu_targets");
+                // Increase the number of iterations due to how many times we have to run pmu captures
+                applaunchIterations *= pmuCounters.length * pmuTargets.length;
+                // Run a baseline perf capture before the app is launched
+                sleep(20);
+                killBackground();
+                for (String pmuCounter : pmuCounters) {
+                    String perfCmd = String.format("/data/local/tmp/wa-bin/perf stat -a -e %s sleep %d >> %s/uxtracing/pmu_baseline.txt 2>&1",
+                                                   pmuCounter, uxTimer, parameters.getString("workdir"));
+                    Process perfProc = execRoot(perfCmd);
+                    perfProc.waitFor();
+                    perfProc.destroy();
+                }
+                break;
+            case "ATRACE":
+                uxAtrace = AtraceLogger.getAtraceLoggerInstance(InstrumentationRegistry.getInstrumentation());
+                break;
+            default:
+                // Do Nothing
+                break;
+        }
+    }
+    private void uxTracingStart(Integer iteration) throws Exception{
+        String command;
+        switch (uxTracing) {
+            case "UTIL":
+                command = String.format("top -H -s cpu -d 1 -n %d > %s/uxtracing/top_all_%d.txt 2>&1",
+                                        uxTimer, parameters.getString("workdir"), iteration);
+                uxProcess = execRoot(command);
+                break;
+            case "PIDS":
+            case "TIDS":
+                if ((pmuCounters.length > 0) || (pmuTargets.length > 0)) {
+                    Integer actual_iteration = iteration / (pmuCounters.length * pmuTargets.length);
+                    String pmuCounter = pmuCounters[iteration % pmuCounters.length]; // Cycle around the list of pmuCounters
+                    String pmuTarget = pmuTargets[(iteration / pmuCounters.length) % pmuTargets.length]; // Cycle around the list of pmuTargets
+                    if (uxTracing.equals("PIDS")) {
+                        command = String.format("/data/local/tmp/wa-bin/perf stat -a -e %s -p `pidof -s %s` sleep %d >> %s/uxtracing/pmu_%s_%d.txt 2>&1",
+                                                pmuCounter, pmuTarget, uxTimer, parameters.getString("workdir"), pmuTarget.replace("/", ""), actual_iteration);
+                    }
+                    else {
+                        String thread = pmuTarget.substring(0, 15).trim();
+                        String process = pmuTarget.substring(15);
+                        String tid_cmd = String.format("ps -t | grep %s | grep `pidof -s %s`", thread, process);
+                        String output = execRootOutput(tid_cmd);
+                        if (output.isEmpty()) {
+                            Log.d("Unable to find tid", String.format("PID %s : TID %s", process, thread));
+                            return;
+                        }
+                        output = output.split("\\s+")[1];
+                        command = String.format("/data/local/tmp/wa-bin/perf stat -a -e %s -t %s sleep %d >> %s/uxtracing/pmu_%s_%s_%d.txt 2>&1",
+                                                pmuCounter, output, uxTimer, parameters.getString("workdir"), process.replace("/", ""), thread.replace("/", ""), actual_iteration);
+                    }
+                    uxProcess = execRoot(command);
+                }
+                else {
+                    uxTracing = "NONE";
+                }
+                break;
+            case "ATRACE":
+                uxAtrace.atraceStart(new HashSet<String>(Arrays.asList("sched", "am", "wm", "gfx", "view", "dalvik", "input")), 15360, uxTimer,
+                                     new File(String.format("%s/uxtracing", parameters.getString("workdir"))), iteration.toString());
+                break;
+            default:
+                // Do Nothing
+                break;
+        }
+    }
+    private void uxTracingStop() throws Exception{
+        switch (uxTracing) {
+            case "ATRACE":
+                uxAtrace.atraceStop();
+                break;
+            case "UTIL":
+            case "PIDS":
+            case "TIDS":
+                uxProcess.waitFor();
+                uxProcess.destroy();
+                break;
+            default:
+                // Do Nothing
+                break;
+        }
+    }
 
     /** Uiautomator function called by the applaunch workload. */
 @Test
@@ -89,7 +237,7 @@ public void runUiAutomation() throws Exception{
 
         // Run the workload for application launch initialization
         runApplaunchSetup();
-
+        uxTracingSetup();
         // Run the workload for application launch measurement
         for (int iteration = 0; iteration < applaunchIterations; iteration++) {
             Log.d("Applaunch iteration number: ", String.valueOf(applaunchIterations));
@@ -122,8 +270,11 @@ public void runUiAutomation() throws Exception{
         String testTag = "applaunch" + iteration_count;
         String launchCommand = launch_workload.getLaunchCommand();
         AppLaunch applaunch = new AppLaunch(testTag, launchCommand);
+
         applaunch.startLaunch();//Launch the application and start timer
+        uxTracingStart(iteration_count);
         applaunch.endLaunch();//marks the end of launch and stops timer
+        uxTracingStop();
     }
 
     /*
