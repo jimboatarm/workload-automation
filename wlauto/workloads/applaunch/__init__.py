@@ -164,9 +164,22 @@ class Applaunch(AndroidUxPerfWorkload):
     #####################
     # CODE BELOW IS WIP #
     #####################
+    # Due to running multiple times for sets of 6 pmu counters,
+    # the workload can run considerably longer than normal.
+    # Increase timeout of WA to not fail prematurely
     run_timeout = 60 * 60
-    uxTracing = 'PIDS'
+    # One of the following: ['UTIL', 'PIDS', 'TIDS', 'ATRACE', 'GATOR']
+    # If anything else/nothing, will perform no uxTracing methods
+    # UTIL - Find the process and thread names by running 'top'
+    # PIDS - Collect pmu counters by using 'perf', across a range of PIDs
+    # TIDS - Collect pmu counters by using 'perf', across a range of TIDs
+    # ATRACE - Collect systrace captures by using 'atrace'
+    # GATOR - Perform a Streamline capture on device
+    uxTracing = 'NONE'
+    # On a slow system, e.g. 1 little core only, a simple applaunch may take as long as 10 seconds
     uxTimer = 10
+    # A list of pmu events for different types of cores
+    # little:A53, big:A73
     pmuCounters = {'little': ['r11', 'r8', 'r12', 'r10', 'r14',
                               'r1', 'r4', 'r3', 'r16', 'r17',
                               're1', 're0', 're4', 're5', 're6',
@@ -177,24 +190,13 @@ class Applaunch(AndroidUxPerfWorkload):
                            'r41', 'r50', 'r51', 'r56', 'r57',
                            'r58', 'rc0', 'rc1', 'rd3', 'rd8',
                            'rd9', 'rda']}
-    # pidCommon = ['system_server', '/system/bin/surfaceflinger']
-    # pidTargets = {'launch_from_background':
-    #               {'adobereader': pidCommon + ['com.adobe.reader'],
-    #                'googleplaybooks': pidCommon + ['com.google.android.apps.books', 'com.google.android.gms.ui', 'com.android.systemui']},
-    #               'launch_from_long-idle':
-    #               {'adobereader': pidCommon + ['com.adobe.reader'],
-    #                'googleplaybooks': pidCommon + ['com.google.android.apps.books', 'com.google.process.gapps']}}
-    # tidCommon = ['android.displaysystem_server', 'surfaceflinger /system/bin/surfaceflinger']
-    # tidTargets = {'launch_from_background':
-    #               {'adobereader': tidCommon + ['RenderThread   com.adobe.reader', 'om.adobe.readercom.adobe.reader'],
-    #                'googleplaybooks': tidCommon + ['ndroid.systemuicom.android.systemui', 'BooksImageManagcom.google.android.apps.books', 'HeapTaskDaemon com.google.android.apps.books', 'Jit thread poolcom.google.android.apps.books', 'RenderThread   com.google.android.apps.books', 'roid.apps.bookscom.google.android.apps.books', '.android.gms.uicom.google.android.gms.ui', 'Jit thread poolcom.google.android.gms.ui']},
-    #               'launch_from_long-idle':
-    #               {'adobereader': tidCommon + ['Chrome_InProcGpcom.adobe.reader', 'Chrome_InProcRecom.adobe.reader', 'HeapTaskDaemon com.adobe.reader', 'RenderThread   com.adobe.reader', 'om.adobe.readercom.adobe.reader', 'pool-5-thread-1com.adobe.reader', 'pool-5-thread-2com.adobe.reader', 'android.bg     system_server'],
-    #                'googleplaybooks': tidCommon + ['AsyncTask #1   com.google.android.apps.books', 'AsyncTask #4   com.google.android.apps.books', 'BooksImageManagcom.google.android.apps.books', 'HeapTaskDaemon com.google.android.apps.books', 'Jit thread poolcom.google.android.apps.books', 'RenderThread   com.google.android.apps.books', 'pool-1-thread-1com.google.android.apps.books', 'roid.apps.bookscom.google.android.apps.books', 'e.process.gappscom.google.process.gapps', 'HeapTaskDaemon system_server']}}
+    # A list of the main PID names for each launchtype and app
     pidTargets = {'launch_from_long-idle':
                   {'adobereader': ['system_server', 'com.google.android.googlequicksearchbox:search', 'com.adobe.reader', 'com.android.systemui', 'com.android.vending'],
                    'googleplaybooks': ['system_server', 'com.google.android.googlequicksearchbox:search', 'com.google.android.apps.books'],
                    'googlephotos': ['system_server', 'com.google.android.googlequicksearchbox:search', 'com.google.android.apps.photos']}}
+    # A list of the main TID names for each launchtype and app
+    # Format: <tid name exactly 15 characters long - space padded if neccessary><pid name as above>
     tidTargets = {'launch_from_long-idle':
                   {'adobereader': ['HeapTaskDaemon com.adobe.reader', 'Jit thread poolcom.adobe.reader', 'RenderThread   com.adobe.reader', 'om.adobe.readercom.adobe.reader', 'pool-4-thread-1com.adobe.reader', 'pool-4-thread-2com.adobe.reader', 'RenderThread   com.android.systemui', 'ndroid.systemuicom.android.systemui', 'android.vendingcom.android.vending', 'HeapTaskDaemon com.google.android.googlequicksearchbox:search', 'HeapTaskDaemon system_server', 'android.bg     system_server'],
                    'googleplaybooks': ['AsyncTask #1   com.google.android.apps.books', 'BooksImageManagcom.google.android.apps.books', 'HeapTaskDaemon com.google.android.apps.books', 'Jit thread poolcom.google.android.apps.books', 'pool-1-thread-1com.google.android.apps.books', 'roid.apps.bookscom.google.android.apps.books', 'gle.android.gmscom.google.android.gms', 'HeapTaskDaemon com.google.android.googlequicksearchbox:search', 'HeapTaskDaemon system_server', 'android.displaysystem_server'],

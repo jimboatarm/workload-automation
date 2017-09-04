@@ -27,13 +27,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 import dalvik.system.DexClassLoader;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.ExtendedSSLSession;
 
@@ -59,8 +63,10 @@ public class UiAutomation extends UxPerfUiAutomation {
     /* CODE BELOW IS WIP */
     /* [INPUT] Define what type of tracing to do:
      * UTIL - Find the process and thread names by running 'top'
-     * PERF - Collect pmu counters by using 'perf'
+     * PIDS - Collect pmu counters by using 'perf', across a range of PIDs
+     * TIDS - Collect pmu counters by using 'perf', across a range of TIDs
      * ATRACE - Collect systrace captures by using 'atrace'
+     * GATOR - Perform a Streamline capture on device
      */
     private String uxTracing;
     // [INPUT] Define how long to run commands for, if time based
@@ -125,21 +131,41 @@ public class UiAutomation extends UxPerfUiAutomation {
             case "ATRACE":
                 uxAtrace = AtraceLogger.getAtraceLoggerInstance(InstrumentationRegistry.getInstrumentation());
                 break;
+            case "GATOR":
+                // For local captures, you need a session.xml
+                String session = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><session call_stack_unwinding=\"yes\" parse_debug_info=\"yes\" version=\"1\" high_resolution=\"no\" buffer_mode=\"streaming\" sample_rate=\"normal\" duration=\"0\" live_rate=\"100\"><energy_capture version=\"1\" type=\"none\"><channel id=\"0\" resistance=\"20\" power=\"yes\"/></energy_capture></session>";
+                File xml = new File("/data/local/tmp/wa-bin", "session.xml");
+                if (!xml.exists()) {
+                    // Write out the new session data
+                    FileOutputStream fos = new FileOutputStream(xml, false);
+                    fos.write(session.getBytes());
+                    fos.flush();
+                    fos.close();
+                }
+                // Make sure gator isnt running already
+                Process cmd = execRoot("pkill -l SIGKILL gatord");
+                cmd.waitFor();
+                cmd.destroy();
+                break;
             default:
                 // Do Nothing
                 break;
         }
     }
-    private void uxTracingStart(Integer iteration) throws Exception{
+    private void uxTracingStart(AppLaunch applaunch, Integer iteration) throws Exception{
         String command;
         switch (uxTracing) {
             case "UTIL":
                 command = String.format("top -H -s cpu -d 1 -n %d > %s/uxtracing/top_all_%d.txt 2>&1",
                                         uxTimer, parameters.getString("workdir"), iteration);
                 uxProcess = execRoot(command);
+                sleep(1);
+                applaunch.startLaunch();
                 break;
             case "PIDS":
             case "TIDS":
+                applaunch.startLaunch();
+                sleep(1);
                 if ((pmuCounters.length > 0) || (pmuTargets.length > 0)) {
                     Integer actual_iteration = iteration / (pmuCounters.length * pmuTargets.length);
                     String pmuCounter = pmuCounters[iteration % pmuCounters.length]; // Cycle around the list of pmuCounters
@@ -170,13 +196,24 @@ public class UiAutomation extends UxPerfUiAutomation {
             case "ATRACE":
                 uxAtrace.atraceStart(new HashSet<String>(Arrays.asList("sched", "am", "wm", "gfx", "view", "dalvik", "input")), 15360, uxTimer,
                                      new File(String.format("%s/uxtracing", parameters.getString("workdir"))), iteration.toString());
+                sleep(1);
+                applaunch.startLaunch();
+                break;
+            case "GATOR":
+                command = String.format("/data/local/tmp/wa-bin/gatord -d -s /data/local/tmp/wa-bin/session.xml -o %1$s/uxtracing/%2$d.apc > %1$s/uxtracing/gator_log_%2$d.txt 2>&1",
+                                        parameters.getString("workdir"), iteration);
+                uxProcess = execRoot(command);
+                sleep(uxTimer);
+                applaunch.startLaunch();
                 break;
             default:
                 // Do Nothing
                 break;
         }
     }
-    private void uxTracingStop() throws Exception{
+    private void uxTracingStop(AppLaunch applaunch) throws Exception{
+        applaunch.endLaunch();
+        sleep(1);
         switch (uxTracing) {
             case "ATRACE":
                 uxAtrace.atraceStop();
@@ -184,6 +221,13 @@ public class UiAutomation extends UxPerfUiAutomation {
             case "UTIL":
             case "PIDS":
             case "TIDS":
+                uxProcess.waitFor();
+                uxProcess.destroy();
+                break;
+            case "GATOR":
+                Process cmd = execRoot("pkill -l SIGINT gatord");
+                cmd.waitFor();
+                cmd.destroy();
                 uxProcess.waitFor();
                 uxProcess.destroy();
                 break;
@@ -271,10 +315,8 @@ public void runUiAutomation() throws Exception{
         String launchCommand = launch_workload.getLaunchCommand();
         AppLaunch applaunch = new AppLaunch(testTag, launchCommand);
 
-        applaunch.startLaunch();//Launch the application and start timer
-        uxTracingStart(iteration_count);
-        applaunch.endLaunch();//marks the end of launch and stops timer
-        uxTracingStop();
+        uxTracingStart(applaunch, iteration_count); //Launch the application and start timer
+        uxTracingStop(applaunch); //marks the end of launch and stops timer
     }
 
     /*
