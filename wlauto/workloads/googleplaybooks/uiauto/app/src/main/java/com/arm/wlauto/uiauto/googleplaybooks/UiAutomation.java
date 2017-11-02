@@ -71,10 +71,10 @@ public void runUiAutomation() throws Exception {
         addToLibrary();
         openMyLibrary();
         openBook(libraryBookTitle);
-
+                
         UiWatcher pageSyncPopUpWatcher = createPopUpWatcher();
         registerWatcher("pageSyncPopUp", pageSyncPopUpWatcher);
-        runWatchers();
+        runWatchers();        
 
         selectChapter(chapterPageNumber);
         gesturesTest();
@@ -251,7 +251,7 @@ public void runUiAutomation() throws Exception {
         if (add.exists()) {
             // add to My Library and opens book by default
             add.click();
-            clickUiObject(BY_TEXT, "BUY", "android.widget.Button", true);
+            clickUiObject(BY_TEXT, "CONTINUE", "android.widget.Button", true);
         } else {
             // opens book
             clickUiObject(BY_TEXT, "READ", "android.widget.Button");
@@ -578,6 +578,7 @@ public void runUiAutomation() throws Exception {
 
     // Helper for waiting on a page between actions
     private UiObject waitForPage() throws Exception {
+        dismissNightTimeReading();
         UiObject activityReader =
             mDevice.findObject(new UiSelector().resourceId(packageID + "activity_reader")
                                          .childSelector(new UiSelector()
@@ -660,5 +661,13 @@ public void runUiAutomation() throws Exception {
             page = searchPage(view, pagenum, updown, attempts - 1);
         }
         return page;
+    }
+    
+    private void dismissNightTimeReading() throws Exception {
+        UiObject nightTime = 
+            mDevice.findObject(new UiSelector().resourceId("com.google.android.apps.books:id/nl_dismiss"));
+        if (nightTime.waitForExists(viewTimeout)) {
+            nightTime.click();
+        }
     }
 }
