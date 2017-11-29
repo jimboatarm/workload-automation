@@ -81,7 +81,8 @@ class Workload(TargetedPlugin):
         validated.
 
         """
-        pass
+        for asset in self.deployable_assets:
+            self.asset_files.append(context.resolver.get(File(self, asset)))
 
     @once_per_instance
     def initialize(self, context):
@@ -90,7 +91,7 @@ class Workload(TargetedPlugin):
         workload instance, i.e., unlike ``setup()`` it will not be invoked on
         each iteration.
         """
-        if self.deployable_assets:
+        if self.asset_files:
             self.deploy_assets(context)
 
     def setup(self, context):
@@ -138,14 +139,14 @@ class Workload(TargetedPlugin):
             self.remove_assets(context)
 
     def deploy_assets(self, context):
-        """ Deploy assets if avaliable to the target """
+        """ Deploy assets if available to the target """
         if not self.asset_directory:
             self.asset_directory = self.target.working_directory
         else:
             self.target.execute('mkdir -p {}'.format(self.asset_directory))
 
-        for i, asset in enumerate(self.deployable_assets):
-            self.target.push(self.asset_files[i], self.asset_directory)
+        for asset in self.asset_files:
+            self.target.push(asset, self.asset_directory)
             self.deployed_assets.append(self.target.path.join(self.asset_directory,
                                                               asset))
 
@@ -229,10 +230,6 @@ class ApkWorkload(Workload):
                                   uninstall=self.uninstall,
                                   exact_abi=self.exact_abi)
 
-    def init_resources(self, context):
-        for asset in self.deployable_assets:
-            self.asset_files.append(context.resolver.get(File(self, asset)))
-
     @once_per_instance
     def initialize(self, context):
         super(ApkWorkload, self).initialize(context)
@@ -246,18 +243,10 @@ class ApkWorkload(Workload):
         self.apk.setup(context)
         time.sleep(self.loading_time)
 
-    def run(self, context):
-        pass
-
-    def extract_results(self, context):
-        pass
-
     def teardown(self, context):
+        super(ApkWorkload, self).teardown(context)
         self.apk.teardown()
 
-    @once_per_instance
-    def finalize(self, context):
-        pass
 
     def deploy_assets(self, context):
         super(ApkWorkload, self).deploy_assets(context)
@@ -558,13 +547,33 @@ class PackageHandler(object):
         self.target.clear_logcat()
 
     def resolve_package(self, context):
-        self.apk_file = context.resolver.get(ApkFile(self.owner,
-                                                     variant=self.variant,
-                                                     version=self.version,
-                                                     package=self.package_name,
-                                                     exact_abi=self.exact_abi,
-                                                     supported_abi=self.supported_abi),
-                                             strict=self.strict)
+        if not self.owner.package_names and not self.package_name:
+            msg = 'Cannot Resolve package; No package name(s) specified'
+            raise WorkloadError(msg)
+
+        if self.package_name:
+            self.apk_file = context.resolver.get(ApkFile(self.owner,
+                                                         variant=self.variant,
+                                                         version=self.version,
+                                                         package=self.package_name,
+                                                         exact_abi=self.exact_abi,
+                                                         supported_abi=self.supported_abi),
+                                                 strict=self.strict)
+        else:
+            available_packages = []
+            for package in self.owner.package_names:
+                available_packages.append(context.resolver.get(ApkFile(self.owner,
+                                                                       variant=self.variant,
+                                                                       version=self.version,
+                                                                       package=package,
+                                                                       exact_abi=self.exact_abi,
+                                                                       supported_abi=self.supported_abi),
+                                                               strict=self.strict))
+            if len(available_packages) == 1:
+                self.apk_file = available_packages[0]
+            elif len(available_packages) > 1:
+                msg = 'Multiple matching packages found for "{}" on host: {}'
+                raise WorkloadError(msg.format(self.owner, available_packages))
         if self.apk_file:
             self.apk_info = ApkInfo(self.apk_file)
             if self.version:
@@ -575,9 +584,6 @@ class PackageHandler(object):
                     msg = 'Multiple matching packages found for {}; host version: {}, device version: {}'
                     raise WorkloadError(msg.format(self.owner, host_version, installed_version))
         else:
-            if not self.owner.package_names and not self.package_name:
-                msg = 'No package name(s) specified and no matching APK file found on host'
-                raise WorkloadError(msg)
             self.resolve_package_from_target(context)
 
     def resolve_package_from_target(self, context):
