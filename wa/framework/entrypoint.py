@@ -18,7 +18,6 @@ import sys
 import argparse
 import logging
 import os
-import subprocess
 import warnings
 
 from wa.framework import pluginloader
@@ -26,13 +25,14 @@ from wa.framework.command import init_argument_parser
 from wa.framework.configuration import settings
 from wa.framework.configuration.execution import ConfigManager
 from wa.framework.host import init_user_directory
-from wa.framework.exception import WAError, DevlibError, ConfigError
+from wa.framework.exception import ConfigError
 from wa.utils import log
 from wa.utils.doc import format_body
-from wa.utils.misc import get_traceback
 
 warnings.filterwarnings(action='ignore', category=UserWarning, module='zope')
 
+# Disable this to avoid false positive from dynamically-created attributes.
+# pylint: disable=no-member
 
 logger = logging.getLogger('command_line')
 
@@ -40,7 +40,7 @@ logger = logging.getLogger('command_line')
 def load_commands(subparsers):
     commands = {}
     for command in pluginloader.list_commands():
-        commands[command.name] = pluginloader.get_command(command.name, 
+        commands[command.name] = pluginloader.get_command(command.name,
                                                           subparsers=subparsers)
     return commands
 
@@ -81,12 +81,20 @@ def main():
         # full argument parse cannot be complted until the commands are loaded; so
         # parse just the base args for know so we can get verbosity.
         argv = split_joined_options(sys.argv[1:])
-        args, _ = parser.parse_known_args(argv)
+
+        # 'Parse_known_args' automatically displays the default help and exits
+        # if '-h' is detected, we want our custom help messages so ensure this
+        # is never passed as a parameter.
+        filtered_argv = list(argv)
+        if '-h' in filtered_argv:
+            filtered_argv.remove('-h')
+
+        args, _ = parser.parse_known_args(filtered_argv)
         settings.set("verbosity", args.verbose)
         log.init(settings.verbosity)
 
         # each command will add its own subparser
-        commands = load_commands(parser.add_subparsers(dest='command'))  
+        commands = load_commands(parser.add_subparsers(dest='command'))
         args = parser.parse_args(argv)
 
         config = ConfigManager()

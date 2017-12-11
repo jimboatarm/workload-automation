@@ -1,10 +1,14 @@
 import os
+import shutil
 
 from wa.framework.configuration.core import settings
 
+# Have to disable this due to dynamic attributes
+# pylint: disable=no-member
+
 def init_user_directory(overwrite_existing=False):  # pylint: disable=R0914
     """
-    Initialise a fresh user directory. 
+    Initialise a fresh user directory.
     """
     if os.path.exists(settings.user_directory):
         if not overwrite_existing:
@@ -29,5 +33,5 @@ def init_user_directory(overwrite_existing=False):  # pylint: disable=R0914
             for root, dirs, files in os.walk(settings.user_directory):
                 for d in dirs:
                     os.chown(os.path.join(root, d), uid, gid)
-                for f in files: 
+                for f in files:
                     os.chown(os.path.join(root, f), uid, gid)

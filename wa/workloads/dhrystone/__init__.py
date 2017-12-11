@@ -19,6 +19,7 @@ import os
 import re
 
 from wa import Workload, Parameter, ConfigError, Executable
+from wa.utils.exec_control import once
 
 
 class Dhrystone(Workload):
@@ -71,6 +72,7 @@ class Dhrystone(Workload):
                   '''),
     ]
 
+    @once
     def initialize(self, context):
         resource = Executable(self, self.target.abi, 'dhrystone')
         host_exe = context.resolver.get(resource)
@@ -78,8 +80,8 @@ class Dhrystone(Workload):
 
     def setup(self, context):
         if self.mloops:
-            execution_mode = '-l {}'.format(self.mloops) 
-        else: 
+            execution_mode = '-l {}'.format(self.mloops)
+        else:
             execution_mode = '-r {}'.format(self.duration)
         if self.taskset_mask:
             taskset_string = '{} taskset 0x{:x} '.format(self.target.busybox,
@@ -99,8 +101,8 @@ class Dhrystone(Workload):
 
     def run(self, context):
         try:
-            self.output = self.target.execute(self.command, 
-                                              timeout=self.timeout, 
+            self.output = self.target.execute(self.command,
+                                              timeout=self.timeout,
                                               check_exit_code=False)
         except KeyboardInterrupt:
             self.target.killall('dhrystone')
@@ -143,6 +145,7 @@ class Dhrystone(Workload):
         context.add_metric('total DMIPS', total_dmips)
         context.add_metric('total score', total_score)
 
+    @once
     def finalize(self, context):
         self.target.uninstall('dhrystone')
 

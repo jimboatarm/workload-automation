@@ -19,25 +19,24 @@ This module contains the standard set of resource getters used by Workload Autom
 
 """
 import httplib
-import inspect
 import json
 import logging
 import os
-import re
 import shutil
 import sys
 
 import requests
 
-from devlib.utils.android import ApkInfo
 
 from wa import Parameter, settings, __file__ as _base_filepath
-from wa.framework.resource import ResourceGetter, SourcePriority, NO_ONE 
+from wa.framework.resource import ResourceGetter, SourcePriority, NO_ONE
 from wa.framework.exception import ResourceError
-from wa.utils.misc import (ensure_directory_exists as _d, 
+from wa.utils.misc import (ensure_directory_exists as _d,
                            ensure_file_directory_exists as _f, sha256, urljoin)
 from wa.utils.types import boolean, caseless_string
 
+# Because of use of Enum (dynamic attrs)
+# pylint: disable=no-member
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -111,12 +110,13 @@ class Package(ResourceGetter):
     def register(self, resolver):
         resolver.register(self.get, SourcePriority.package)
 
+    # pylint: disable=no-self-use
     def get(self, resource):
         if resource.owner == NO_ONE:
             basepath = os.path.join(os.path.dirname(_base_filepath), 'assets')
         else:
             modname = resource.owner.__module__
-            basepath  = os.path.dirname(sys.modules[modname].__file__)
+            basepath = os.path.dirname(sys.modules[modname].__file__)
         return get_from_location(basepath, resource)
 
 
@@ -127,6 +127,7 @@ class UserDirectory(ResourceGetter):
     def register(self, resolver):
         resolver.register(self.get, SourcePriority.local)
 
+    # pylint: disable=no-self-use
     def get(self, resource):
         basepath = settings.dependencies_directory
         directory = _d(os.path.join(basepath, resource.owner.name))

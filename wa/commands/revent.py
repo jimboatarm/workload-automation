@@ -96,6 +96,7 @@ class RecordCommand(Command):
 
     def execute(self, state, args):
         self.validate_args(args)
+        state.run_config.merge_device_config(state.plugin_cache)
         if args.device:
             device = args.device
             device_config = {}
@@ -103,7 +104,12 @@ class RecordCommand(Command):
             device = state.run_config.device
             device_config = state.run_config.device_config or {}
 
-        self.tm = TargetManager(device, device_config)
+        if args.output:
+            outdir = os.path.basename(args.output)
+        else:
+            outdir = os.getcwd()
+
+        self.tm = TargetManager(device, device_config, outdir)
         self.target = self.tm.target
         self.revent_recorder = ReventRecorder(self.target)
         self.revent_recorder.deploy()
@@ -178,9 +184,11 @@ class RecordCommand(Command):
 
         self.logger.info('Deploying {}'.format(args.workload))
         workload = pluginloader.get_workload(args.workload, self.target)
-        workload.apk.initialize(context)
-        workload.apk.setup(context)
-        sleep(workload.loading_time)
+        # Setup apk if android workload
+        if hasattr(workload, 'apk'):
+            workload.apk.initialize(context)
+            workload.apk.setup(context)
+            sleep(workload.loading_time)
 
         output_path = os.path.join(workload.dependencies_directory,
                                    'revent_files')
@@ -228,6 +236,7 @@ class ReplayCommand(Command):
 
     # pylint: disable=W0201
     def execute(self, state, args):
+        state.run_config.merge_device_config(state.plugin_cache)
         if args.device:
             device = args.device
             device_config = {}
@@ -235,13 +244,13 @@ class ReplayCommand(Command):
             device = state.run_config.device
             device_config = state.run_config.device_config or {}
 
-        target_manager = TargetManager(device, device_config)
+        target_manager = TargetManager(device, device_config, None)
         self.target = target_manager.target
         revent_file = self.target.path.join(self.target.working_directory,
-                                            os.path.split(args.revent)[1])
+                                            os.path.split(args.recording)[1])
 
         self.logger.info("Pushing file to target")
-        self.target.push(args.revent, self.target.working_directory)
+        self.target.push(args.recording, self.target.working_directory)
 
         revent_recorder = ReventRecorder(target_manager.target)
         revent_recorder.deploy()

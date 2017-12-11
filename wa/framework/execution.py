@@ -16,34 +16,20 @@
 # pylint: disable=no-member
 
 import logging
-import os
-import random
-import subprocess
-import uuid
-from collections import Counter, defaultdict, OrderedDict
-from contextlib import contextmanager
 from copy import copy
 from datetime import datetime
-from itertools import izip_longest
 
 import wa.framework.signal as signal
-from wa.framework import instrumentation, pluginloader
-from wa.framework.configuration.core import settings, Status
-from wa.framework.exception import (WAError, ConfigError, TimeoutError,
-                                    InstrumentError, TargetError, HostError,
-                                    TargetNotRespondingError, WorkloadError)
+from wa.framework import instrumentation
+from wa.framework.configuration.core import Status
+from wa.framework.exception import HostError, WorkloadError
 from wa.framework.job import Job
 from wa.framework.output import init_job_output
-from wa.framework.plugin import Artifact
 from wa.framework.processor import ProcessorManager
 from wa.framework.resource import ResourceResolver
-from wa.framework.run import RunState
-from wa.framework.target.info import TargetInfo
 from wa.framework.target.manager import TargetManager
 from wa.utils import log
-from wa.utils.misc import (ensure_directory_exists as _d, merge_config_values,
-                           get_traceback, format_duration)
-from wa.utils.serializer import json
+from wa.utils.misc import merge_config_values, format_duration
 
 
 class ExecutionContext(object):
@@ -277,7 +263,6 @@ class Executor(object):
         self.logger = logging.getLogger('executor')
         self.error_logged = False
         self.warning_logged = False
-        pluginloader = None
         self.target_manager = None
         self.device = None
 
@@ -368,7 +353,11 @@ class Executor(object):
 
 class Runner(object):
     """
+    Triggers running jobs and processing results
 
+    Takes pre-initialized ExcecutionContext and ProcessorManager. Handles
+    actually running the jobs, and triggers the ProcessorManager to handle
+    processing job and run results.
     """
 
     def __init__(self, context, pm):
@@ -432,7 +421,7 @@ class Runner(object):
         except KeyboardInterrupt:
             job.set_status(Status.ABORTED)
             raise
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             job.set_status(Status.FAILED)
             context.add_event(e.message)
             if not getattr(e, 'logged', None):
@@ -524,4 +513,3 @@ class Runner(object):
 
     def __str__(self):
         return 'runner'
-

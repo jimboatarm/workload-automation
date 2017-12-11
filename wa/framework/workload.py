@@ -19,15 +19,14 @@ import time
 
 from wa import Parameter
 from wa.framework.plugin import TargetedPlugin
-from wa.framework.resource import (ApkFile, JarFile, ReventFile, NO_ONE,
-                                   Executable, File, loose_version_matching)
+from wa.framework.resource import (ApkFile, ReventFile,
+                                   File, loose_version_matching)
 from wa.framework.exception import WorkloadError
 from wa.utils.types import ParameterDict
 from wa.utils.revent import ReventRecorder
 from wa.utils.exec_control import once_per_instance
 
 from devlib.utils.android import ApkInfo
-from devlib.exception import TargetError
 
 
 class Workload(TargetedPlugin):
@@ -102,6 +101,7 @@ class Workload(TargetedPlugin):
         This is also the place to perform any on-device checks prior to
         attempting to execute the workload.
         """
+        # pylint: disable=unused-argument
         if self.requires_network and not self.target.is_network_connected():
             raise WorkloadError(
                 'Workload "{}" requires internet. Target does not appear '
@@ -140,6 +140,7 @@ class Workload(TargetedPlugin):
 
     def deploy_assets(self, context):
         """ Deploy assets if available to the target """
+        # pylint: disable=unused-argument
         if not self.asset_directory:
             self.asset_directory = self.target.working_directory
         else:
@@ -152,6 +153,7 @@ class Workload(TargetedPlugin):
 
     def remove_assets(self, context):
         """ Cleanup assets deployed to the target """
+        # pylint: disable=unused-argument
         for asset in self.deployed_assets:
             self.target.remove(asset)
 
@@ -316,7 +318,87 @@ class ApkUiautoWorkload(ApkUIWorkload):
         super(ApkUiautoWorkload, self).setup(context)
 
 
-class ReventWorkload(ApkUIWorkload):
+class ApkReventWorkload(ApkUIWorkload):
+
+    # May be optionally overwritten by subclasses
+    # Times are in seconds
+    setup_timeout = 5 * 60
+    run_timeout = 10 * 60
+    extract_results_timeout = 5 * 60
+    teardown_timeout = 5 * 60
+
+    def __init__(self, target, **kwargs):
+        super(ApkReventWorkload, self).__init__(target, **kwargs)
+        self.apk = PackageHandler(self)
+        self.gui = ReventGUI(self, target,
+                             self.setup_timeout,
+                             self.run_timeout,
+                             self.extract_results_timeout,
+                             self.teardown_timeout)
+
+class UIWorkload(Workload):
+
+    def __init__(self, target, **kwargs):
+        super(UIWorkload, self).__init__(target, **kwargs)
+        self.gui = None
+
+    def init_resources(self, context):
+        super(UIWorkload, self).init_resources(context)
+        self.gui.init_resources(context.resolver)
+
+    @once_per_instance
+    def initialize(self, context):
+        super(UIWorkload, self).initialize(context)
+
+    def setup(self, context):
+        super(UIWorkload, self).setup(context)
+        self.gui.deploy()
+        self.gui.setup()
+
+    def run(self, context):
+        super(UIWorkload, self).run(context)
+        self.gui.run()
+
+    def extract_results(self, context):
+        super(UIWorkload, self).extract_results(context)
+        self.gui.extract_results()
+
+    def teardown(self, context):
+        self.gui.teardown()
+        super(UIWorkload, self).teardown(context)
+
+    @once_per_instance
+    def finalize(self, context):
+        super(UIWorkload, self).finalize(context)
+        self.gui.remove()
+
+
+class UiautoWorkload(UIWorkload):
+
+    platform = 'android'
+
+    parameters = [
+        Parameter('markers_enabled', kind=bool, default=False,
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  at various points during execution. These markes may be used
+                  by other plugins or post-processing scripts to provide
+                  measurments or statistics for specific parts of the workload
+                  execution.
+                  """),
+    ]
+
+    def __init__(self, target, **kwargs):
+        super(UiautoWorkload, self).__init__(target, **kwargs)
+        self.gui = UiAutomatorGUI(self)
+
+    def setup(self, context):
+        self.gui.uiauto_params['markers_enabled'] = self.markers_enabled
+        self.gui.init_commands()
+        super(UiautoWorkload, self).setup(context)
+
+
+class ReventWorkload(UIWorkload):
 
     # May be optionally overwritten by subclasses
     # Times are in seconds
@@ -327,12 +409,12 @@ class ReventWorkload(ApkUIWorkload):
 
     def __init__(self, target, **kwargs):
         super(ReventWorkload, self).__init__(target, **kwargs)
-        self.apk = PackageHandler(self)
         self.gui = ReventGUI(self, target,
                              self.setup_timeout,
                              self.run_timeout,
                              self.extract_results_timeout,
                              self.teardown_timeout)
+
 
 
 class UiAutomatorGUI(object):
@@ -666,6 +748,7 @@ class PackageHandler(object):
         self.target.execute('pm clear {}'.format(self.apk_info.package))
 
     def install_apk(self, context):
+        # pylint: disable=unused-argument
         output = self.target.install_apk(self.apk_file, self.install_timeout,
                                          replace=True, allow_downgrade=True)
         if 'Failure' in output:

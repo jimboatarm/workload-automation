@@ -1,11 +1,8 @@
 import logging
 import os
 import shutil
-import string
-import sys
-import uuid
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from wa.framework.configuration.core import JobSpec, Status
 from wa.framework.configuration.execution import ConfigManager
@@ -47,7 +44,7 @@ class Output(object):
 
     @status.setter
     def status(self, value):
-        self.result.status =  value
+        self.result.status = value
 
     @property
     def metrics(self):
@@ -87,9 +84,6 @@ class Output(object):
             msg = 'Attempting to add non-existing artifact: {}'
             raise HostError(msg.format(path))
         path = os.path.relpath(path, self.basepath)
-
-        if isinstance(kind, basestring):
-            kind = ArtifactType(kind)
 
         self.result.add_artifact(name, path, kind, description, classifiers)
 
@@ -214,6 +208,7 @@ class JobOutput(Output):
 
     kind = 'job'
 
+    # pylint: disable=redefined-builtin
     def __init__(self, path, id, label, iteration, retry):
         super(JobOutput, self).__init__(path)
         self.id = id
@@ -236,6 +231,7 @@ class Result(object):
         return instance
 
     def __init__(self):
+        # pylint: disable=no-member
         self.status = Status.NEW
         self.metrics = []
         self.artifacts = []
@@ -277,7 +273,8 @@ class Result(object):
         )
 
 
-ArtifactType = enum(['log', 'meta', 'data', 'export', 'raw'])
+ARTIFACT_TYPES = ['log', 'meta', 'data', 'export', 'raw']
+ArtifactType = enum(ARTIFACT_TYPES)
 
 
 class Artifact(object):
@@ -289,7 +286,7 @@ class Artifact(object):
     which also helps WA decide how it should be handled. Currently supported
     kinds are:
 
-        :log: A log file. Not part of "results" as such but contains 
+        :log: A log file. Not part of "results" as such but contains
               information about the run/workload execution that be useful for
               diagnostics/meta analysis.
         :meta: A file containing metadata. This is not part of "results", but
@@ -357,7 +354,7 @@ class Artifact(object):
             self.kind = ArtifactType(kind)
         except ValueError:
             msg = 'Invalid Artifact kind: {}; must be in {}'
-            raise ValueError(msg.format(kind, self.valid_kinds))
+            raise ValueError(msg.format(kind, ARTIFACT_TYPES))
         self.description = description
         self.classifiers = classifiers or {}
 
@@ -515,4 +512,3 @@ def _save_raw_config(meta_dir, state):
         basename = os.path.basename(source)
         dest_path = os.path.join(raw_config_dir, 'cfg{}-{}'.format(i, basename))
         shutil.copy(source, dest_path)
-                                     

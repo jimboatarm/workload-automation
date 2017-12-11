@@ -13,13 +13,14 @@
 # limitations under the License.
 #
 import uuid
-import logging
 from collections import OrderedDict, Counter
 from copy import copy
 from datetime import datetime, timedelta
 
 from wa.framework.configuration.core import Status
 
+# Because of use of Enum (dynamic attrs)
+# pylint: disable=no-member
 
 class RunInfo(object):
     """
@@ -42,12 +43,12 @@ class RunInfo(object):
     def __init__(self, run_name=None, project=None, project_stage=None,
                  start_time=None, end_time=None, duration=None):
         self.uuid = uuid.uuid4()
-        self.run_name = None
-        self.project = None
-        self.project_stage = None
-        self.start_time = None
-        self.end_time = None
-        self.duration = None
+        self.run_name = run_name
+        self.project = project
+        self.project_stage = project_stage
+        self.start_time = start_time
+        self.end_time = end_time
+        self.duration = duration
 
     def to_pod(self):
         d = copy(self.__dict__)
@@ -120,6 +121,7 @@ class JobState(object):
         return '{}-{}-{}'.format(self.id, self.label, self.iteration)
 
     def __init__(self, id, label, iteration, status):
+        # pylint: disable=redefined-builtin
         self.id = id
         self.label = label
         self.iteration = iteration
@@ -136,4 +138,3 @@ class JobState(object):
             retries=0,
             timestamp=self.timestamp,
         )
-
