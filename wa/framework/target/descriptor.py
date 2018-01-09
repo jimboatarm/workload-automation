@@ -5,17 +5,18 @@ from devlib import (LinuxTarget, AndroidTarget, LocalLinuxTarget,
                     Platform, Juno, TC2, Gem5SimulationPlatform,
                     AdbConnection, SshConnection, LocalConnection,
                     Gem5Connection)
+from devlib.target import DEFAULT_SHELL_PROMPT
 
 from wa.framework import pluginloader
 from wa.framework.configuration.core import get_config_point_map
 from wa.framework.exception import PluginLoaderError
 from wa.framework.plugin import Plugin, Parameter
 from wa.framework.target.assistant import LinuxAssistant, AndroidAssistant
-from wa.utils.types import list_of_strings, list_of_ints
+from wa.utils.types import list_of_strings, list_of_ints, regex
 from wa.utils.misc import isiterable
 
 
-def get_target_descriptions(loader=pluginloader):
+def list_target_descriptions(loader=pluginloader):
     targets = {}
     for cls in loader.list_target_descriptors():
         descriptor = cls()
@@ -27,6 +28,13 @@ def get_target_descriptions(loader=pluginloader):
                                                    descriptor.name))
             targets[desc.name] = desc
     return targets.values()
+
+
+def get_target_description(name, loader=pluginloader):
+    for tdesc in list_target_descriptions(loader):
+        if tdesc.name == name:
+            return tdesc
+    raise ValueError('Could not find target descriptor "{}"'.format(name))
 
 
 def instantiate_target(tdesc, params, connect=None, extra_platform_params=None):
@@ -165,6 +173,10 @@ COMMON_TARGET_PARAMS = [
               or more default modules on your platform (e.g. your device is
               unrooted and cpufreq is not accessible to unprivileged users), or
               if ``Target`` initialization is taking too long for your platform.
+              '''),
+    Parameter('shell_prompt', kind=regex, default=DEFAULT_SHELL_PROMPT,
+              description='''
+              A regex that matches the shell prompt on the target.
               '''),
 ]
 
@@ -307,8 +319,8 @@ CONNECTION_PARAMS = {
         Parameter('sudo_cmd', kind=str,
                 default="sudo -- sh -c '{}'",
                 description="""
-                Sudo command to use. Must have ``"{}"``` specified
-                somewher in the string it indicate where the command
+                Sudo command to use. Must have ``"{}"`` specified
+                somewhere in the string it indicate where the command
                 to be run via sudo is to go.
                 """),
     ],

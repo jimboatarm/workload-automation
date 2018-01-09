@@ -5,7 +5,7 @@ from copy import copy
 from datetime import datetime
 
 from wa.framework.configuration.core import JobSpec, Status
-from wa.framework.configuration.execution import ConfigManager
+from wa.framework.configuration.execution import CombinedConfig
 from wa.framework.exception import HostError
 from wa.framework.run import RunState, RunInfo
 from wa.framework.target.info import TargetInfo
@@ -147,6 +147,7 @@ class RunOutput(Output):
         self.info = None
         self.state = None
         self.result = None
+        self.target_info = None
         self.jobs = []
         if (not os.path.isfile(self.statefile) or
                 not os.path.isfile(self.infofile)):
@@ -158,7 +159,15 @@ class RunOutput(Output):
         super(RunOutput, self).reload()
         self.info = RunInfo.from_pod(read_pod(self.infofile))
         self.state = RunState.from_pod(read_pod(self.statefile))
-        # TODO: propulate the jobs from info in the state
+        if os.path.isfile(self.targetfile):
+            self.target_info = TargetInfo.from_pod(read_pod(self.targetfile))
+
+        for job_state in self.state.jobs.itervalues():
+            job_path = os.path.join(self.basepath, job_state.output_name)
+            job = JobOutput(job_path, job_state.id,
+                            job_state.label, job_state.iteration,
+                            job_state.retries)
+            self.jobs.append(job)
 
     def write_info(self):
         write_pod(self.info.to_pod(), self.infofile)
@@ -172,15 +181,11 @@ class RunOutput(Output):
     def read_config(self):
         if not os.path.isfile(self.configfile):
             return None
-        return ConfigManager.from_pod(read_pod(self.configfile))
+        return CombinedConfig.from_pod(read_pod(self.configfile))
 
-    def write_target_info(self, ti):
+    def set_target_info(self, ti):
+        self.target_info = ti
         write_pod(ti.to_pod(), self.targetfile)
-
-    def read_target_config(self):
-        if not os.path.isfile(self.targetfile):
-            return None
-        return TargetInfo.from_pod(read_pod(self.targetfile))
 
     def write_job_specs(self, job_specs):
         job_specs[0].to_pod()
@@ -500,6 +505,12 @@ def init_job_output(run_output, job):
     job_output.status = job.status
     run_output.jobs.append(job_output)
     return job_output
+
+
+def discover_wa_outputs(path):
+    for root, dirs, files in os.walk(path):
+        if '__meta' in dirs:
+            yield  RunOutput(root)
 
 
 def _save_raw_config(meta_dir, state):
