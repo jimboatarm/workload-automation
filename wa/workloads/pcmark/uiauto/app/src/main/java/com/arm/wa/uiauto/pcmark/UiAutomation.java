@@ -51,7 +51,6 @@ public class UiAutomation extends BaseUiAutomation {
     @Before
     public void initialize(){
         initialize_instrumentation();
-        //parameters = getParams();
     }
 
     @Test
@@ -61,9 +60,9 @@ public class UiAutomation extends BaseUiAutomation {
 
     @Test
     public void runWorkload() throws Exception {
-        //loadBenchmarks();
-        //installBenchmark();
-        //runBenchmark();
+        loadBenchmarks();
+        installBenchmark();
+        runBenchmark();
     }
 
     @Test
