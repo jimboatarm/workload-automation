@@ -140,7 +140,7 @@ class AgendaParser(object):
             _collect_valid_id(section.get("id"), seen_section_ids, "section")
             for workload in section["workloads"] if "workloads" in section else []:
                 workload = _get_workload_entry(workload)
-                _collect_valid_id(workload.get("id"), seen_workload_ids, 
+                _collect_valid_id(workload.get("id"), seen_workload_ids,
                                   "workload")
 
         return seen_section_ids, seen_workload_ids
@@ -166,7 +166,7 @@ class AgendaParser(object):
                     raise ConfigError(msg.format(json.dumps(section, indent=None)))
                 section['runtime_params'] = section.pop('params')
 
-            section = _construct_valid_entry(section, seen_sect_ids, 
+            section = _construct_valid_entry(section, seen_sect_ids,
                                              "s", state.jobs_config)
             state.jobs_config.add_section(section, workloads)
 
@@ -208,10 +208,10 @@ def _load_file(filepath, error_name):
 
 def merge_augmentations(raw):
     """
-    Since, from configuration perspective, result processors and instrumens are
+    Since, from configuration perspective, output processors and instruments are
     handled identically, the configuration entries are now interchangeable. E.g. it is
-    now valid to specify a result processor in instrumentation list. This is to make things
-    eassier for the users, as, from their perspective, the distinction is somewhat arbitrary.
+    now valid to specify a output processor in an instruments list. This is to make things
+    easier for the users, as, from their perspective, the distinction is somewhat arbitrary.
 
     For backwards compatibility, both entries are still valid, and this
     function merges them together into a single "augmentations" set, ensuring
@@ -265,7 +265,7 @@ def _construct_valid_entry(raw, seen_ids, prefix, jobs_config):
     else:
         workload_entry['id'] = raw.pop('id')
 
-    # Process instrumentation
+    # Process instruments
     merge_augmentations(raw)
 
     # Validate all workload_entry
@@ -277,7 +277,7 @@ def _construct_valid_entry(raw, seen_ids, prefix, jobs_config):
             workload_entry[name] = value
 
     if "augmentations" in workload_entry:
-        jobs_config.update_enabled_augmentations(workload_entry["augmentations"])
+        jobs_config.update_augmentations(workload_entry["augmentations"])
 
     # error if there are unknown workload_entry
     if raw:
@@ -312,7 +312,7 @@ def _get_workload_entry(workload):
 
 def _process_workload_entry(workload, seen_workload_ids, jobs_config):
     workload = _get_workload_entry(workload)
-    workload = _construct_valid_entry(workload, seen_workload_ids, 
+    workload = _construct_valid_entry(workload, seen_workload_ids,
                                       "wk", jobs_config)
     return workload
 

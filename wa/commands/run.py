@@ -74,16 +74,15 @@ class RunCommand(Command):
         self.parser.add_argument('--disable', action='append', dest='augmentations_to_disable',
                                  default=[],
                                  metavar='INSTRUMENT', help="""
-                                 Specify an instrument or result processor to
+                                 Specify an instrument or output processor to
                                  disable from the command line. This equivalent
-                                 to adding "~{metavar}" to the instrumentation
+                                 to adding "~{metavar}" to the instruments
                                  list in the agenda. This can be used to
                                  temporarily disable a troublesome instrument
                                  for a particular run without introducing
                                  permanent change to the config (which one
                                  might then forget to revert).  This option may
-                                 be
-        specified multiple times.
+                                 be specified multiple times.
                                  """)
 
     def execute(self, config, args):

@@ -242,12 +242,12 @@ class EnergyMeasurement(Instrument):
         Parameter('instrument', kind=str, mandatory=True,
                   allowed_values=['daq', 'energy_probe', 'acme_cape', 'monsoon', 'juno_readenergy'],
                   description="""
-                  Specify the energy instrumentation to be enabled.
+                  Specify the energy instruments to be enabled.
                   """),
         Parameter('instrument_parameters', kind=dict, default={},
                    description="""
                    Specify the parameters used to initialize the desired
-                   instrumentation.
+                   instruments.
                    """),
         Parameter('sites', kind=list_or_string,
                   description="""
@@ -271,7 +271,7 @@ class EnergyMeasurement(Instrument):
 
     def __init__(self, target, loader=pluginloader, **kwargs):
         super(EnergyMeasurement, self).__init__(target, **kwargs)
-        self.instrumentation = None
+        self.instruments = None
         self.measurement_csvs = {}
         self.loader = loader
         self.backend = self.loader.get_plugin(self.instrument)
@@ -319,7 +319,7 @@ class EnergyMeasurement(Instrument):
         for instrument in self.instruments.itervalues():
             instrument.stop()
 
-    def update_result(self, context):
+    def update_output(self, context):
         for device, instrument in self.instruments.iteritems():
             # Append the device key to the filename and artifact name, unless
             # it's None (as it will be for backends with only 1

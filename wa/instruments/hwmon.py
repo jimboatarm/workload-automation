@@ -16,7 +16,7 @@
 from devlib import HwmonInstrument as _Instrument
 
 from wa import Instrument
-from wa.framework.instrumentation import fast
+from wa.framework.instruments import fast
 
 MOMENTARY_QUANTITIES = ['temperature', 'power', 'voltage', 'current', 'fps']
 CUMULATIVE_QUANTITIES = ['energy', 'tx', 'tx/rx', 'frames']
@@ -54,7 +54,7 @@ class HwmonInstrument(Instrument):
     def stop(self, context):
         self.after = self.instrument.take_measurement()
 
-    def update_result(self, context):
+    def update_output(self, context):
         measurements_before = {m.channel.label: m for m in self.before}
         measurements_after = {m.channel.label: m for m in self.after}
 
