@@ -14,13 +14,13 @@
 #
 import os
 
-from wa import ApkUiautoWorkload, Parameter
+from wa import UiautoWorkload, Parameter
 from wa.framework.exception import ValidationError
 from wa.utils.types import list_of_strs
 from wa.utils.misc import unique
 
 
-class speedometer(ApkUiautoWorkload):
+class speedometer(UiautoWorkload):
 
     name = 'speedometer'
     package_names = ['']
@@ -42,5 +42,6 @@ class speedometer(ApkUiautoWorkload):
         super(speedometer, self).init_resources(context)
 
     def run(self, context):
+        super(speedometer, self).run(context)
         self.target.execute('am start -a android.intent.action.VIEW -d http://browserbench.org/Speedometer/')
 

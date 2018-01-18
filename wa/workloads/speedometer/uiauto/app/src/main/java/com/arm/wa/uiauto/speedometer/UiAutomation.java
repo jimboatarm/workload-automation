@@ -84,16 +84,9 @@ public class UiAutomation extends BaseUiAutomation {
         }
     }
 
-    public void openWebpage() throws Exception {
-        UiObject search = 
-            mDevice.findObject(new UiSelector().resourceId("com.android.chrome:id/search_box_text")
-                .className("android.widget.EditText"));
-        search.setText("http://browserbench.org/Speedometer/\n");
-    }
-
     public void runBenchmark() throws Exception {
         UiObject start = 
-            mDevice.findObject(new UiSelector().text("Start Test")
+            mDevice.findObject(new UiSelector().description("Start Test")
                 .className("android.widget.Button"));
         start.click();
         UiObject scores = 
