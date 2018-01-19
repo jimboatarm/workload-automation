@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 import os
+import re
 
 from wa import UiautoWorkload, Parameter
 from wa.framework.exception import ValidationError
@@ -42,6 +43,21 @@ class speedometer(UiautoWorkload):
         super(speedometer, self).init_resources(context)
 
     def run(self, context):
-        super(speedometer, self).run(context)
         self.target.execute('am start -a android.intent.action.VIEW -d http://browserbench.org/Speedometer/')
+        super(speedometer, self).run(context)
+
+    regex = re.compile('Speedometer Score ([0-9]+\.[0-9]+)')
+
+    def update_output(self, context):
+        result = None
+        super(speedometer, self).update_output(context)
+        logcat_file = context.get_artifact_path('logcat')
+        with open(logcat_file) as fh:
+            for line in fh:
+                match = self.regex.search(line)
+                if match:
+                    result = float(match.group(1))
+
+        if result is not None:
+            context.add_metric('Speedometer Score', result, 'Runs per minute', lower_is_better=False)
 

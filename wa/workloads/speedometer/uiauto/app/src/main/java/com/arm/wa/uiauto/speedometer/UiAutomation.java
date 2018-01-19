@@ -24,7 +24,7 @@ import android.support.test.uiautomator.UiSelector;
 import com.arm.wa.uiauto.UxPerfUiAutomation.GestureTestParams;
 import com.arm.wa.uiauto.UxPerfUiAutomation.GestureType;
 import com.arm.wa.uiauto.BaseUiAutomation;
-import com.arm.wa.uiauto.ActionLogger;
+import android.util.Log;
 
 
 import org.junit.Before;
@@ -47,6 +47,7 @@ public class UiAutomation extends BaseUiAutomation {
 
     private int networkTimeoutSecs = 30;
     private long networkTimeout =  TimeUnit.SECONDS.toMillis(networkTimeoutSecs);
+    public static String TAG = "UXPERF";
 
     @Before
     public void initialize(){
@@ -93,6 +94,6 @@ public class UiAutomation extends BaseUiAutomation {
             mDevice.findObject(new UiSelector().resourceId("result-number")
                 .className("android.view.View"));
         scores.waitForExists(300000);
-        //benchmark_result = scores.getText();
+        Log.d(TAG, "Speedometer Score " + scores.getContentDescription());
     }
 }
