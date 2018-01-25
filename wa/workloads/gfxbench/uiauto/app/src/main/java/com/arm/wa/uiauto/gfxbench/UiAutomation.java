@@ -1,0 +1,118 @@
+/*    Copyright 2014-2016 ARM Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.arm.wa.uiauto.gfxbench;
+
+import android.os.Bundle;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiSelector;
+
+import com.arm.wa.uiauto.UxPerfUiAutomation.GestureTestParams;
+import com.arm.wa.uiauto.UxPerfUiAutomation.GestureType;
+import com.arm.wa.uiauto.BaseUiAutomation;
+import com.arm.wa.uiauto.ActionLogger;
+
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+
+import static com.arm.wa.uiauto.BaseUiAutomation.FindByCriteria.BY_DESC;
+import static com.arm.wa.uiauto.BaseUiAutomation.FindByCriteria.BY_ID;
+import static com.arm.wa.uiauto.BaseUiAutomation.FindByCriteria.BY_TEXT;
+
+// Import the uiautomator libraries
+
+@RunWith(AndroidJUnit4.class)
+public class UiAutomation extends BaseUiAutomation {
+
+    private int networkTimeoutSecs = 30;
+    private long networkTimeout =  TimeUnit.SECONDS.toMillis(networkTimeoutSecs);
+
+    @Before
+    public void initialize(){
+        initialize_instrumentation();
+    }
+
+    @Test
+    public void setup() throws Exception{
+        setScreenOrientation(ScreenOrientation.NATURAL);
+        clearFirstRun();
+    }
+
+    @Test
+    public void runWorkload() throws Exception {
+        clearFirstRun();
+        runBenchmark();
+    }
+
+    @Test
+    public void teardown() throws Exception{
+        unsetScreenOrientation();
+    }
+
+    public void clearFirstRun() throws Exception {
+        UiObject accept = 
+            mDevice.findObject(new UiSelector().resourceId("android:id/button1")
+                .className("android.widget.Button"));
+        if (accept.exists()){
+            accept.click();
+            UiObject info = 
+                mDevice.findObject(new UiSelector().resourceId("android:id/button1")
+                    .className("android.widget.Button"));
+            info.waitForExists(1000);
+            info.click();
+            UiObject data =
+                mDevice.findObject(new UiSelector().resourceId("android:id/button1")
+                    .className("android.widget.Button"));
+            data.waitForExists(60000);
+            data.click();
+            sleep(8);
+        }
+
+        UiObject sync = 
+                mDevice.findObject(new UiSelector().text("Data synchronization")
+                    .className("android.widget.TextView"));
+                if (sync.exists()){
+                    UiObject data =
+                        mDevice.findObject(new UiSelector().resourceId("android:id/button1")
+                            .className("android.widget.Button"));
+                    data.click();
+                }
+
+        UiObject home = 
+            mDevice.findObject(new UiSelector().resourceId("com.glbenchmark.glbenchmark27:id/tabbar_back")
+                .className("android.widget.LinearLayout"));
+            home.waitForExists(60000);
+    }
+
+    public void runBenchmark() throws Exception {
+        UiObject start = 
+            mDevice.findObject(new UiSelector().resourceId("com.glbenchmark.glbenchmark27:id/main_circleControl")
+                .className("android.widget.RelativeLayout"));
+        start.click();
+        UiObject complete =
+            mDevice.findObject(new UiSelector().text("High-Level Tests")
+                .className("android.widget.TextView"));
+        complete.waitForExists(1200000);
+    }
+}
