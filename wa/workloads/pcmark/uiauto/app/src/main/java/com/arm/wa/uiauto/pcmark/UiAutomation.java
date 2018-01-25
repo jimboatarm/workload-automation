@@ -75,13 +75,17 @@ public class UiAutomation extends BaseUiAutomation {
         UiObject title = 
             mDevice.findObject(new UiSelector().resourceId("com.futuremark.pcmark.android.benchmark:id/actionBarMenuItemText")
                 .className("android.widget.TextView"));
+        title.waitForExists(60000);
         if (title.exists()){
             title.click();
-            UiObject benchPage = getUiObjectByText("BENCHMARKS");
+            UiObject benchPage = getUiObjectByText("BENCHMARKS");            
             benchPage.click();
             title.click();
             UiObject pcmark = getUiObjectByText("PCMARK");
             pcmark.click();
+        }
+        if (!title.exists()) {
+        throw new UiObjectNotFoundException("Application has not loaded within the given time");
         }
     }
 
@@ -91,15 +95,32 @@ public class UiAutomation extends BaseUiAutomation {
             mDevice.findObject(new UiSelector().descriptionContains("INSTALL("));
         if (benchmark.exists()) {
             benchmark.click();
-                UiObject install = 
-                    mDevice.findObject(new UiSelector().description("INSTALL")
-                        .className("android.view.View"));
+        } else {
+            UiObject benchmarktext = 
+                mDevice.findObject(new UiSelector().textContains("INSTALL("));
+            benchmarktext.click();
+        }
+            UiObject install = 
+                mDevice.findObject(new UiSelector().description("INSTALL")
+                    .className("android.view.View"));
+            if (install.exists()) {
                 install.click();
+            } else {
+                UiObject installtext = 
+                    mDevice.findObject(new UiSelector().text("INSTALL")
+                        .className("android.view.View"));
+                installtext.click();
+                }
                 UiObject installed =
                     mDevice.findObject(new UiSelector().description("RUN")
                         .className("android.view.View"));
-                installed.waitForExists(240000);
-        }
+                installed.waitForExists(3600000);
+                if (!installed.exists()){
+                    UiObject installedtext =
+                        mDevice.findObject(new UiSelector().text("RUN")
+                            .className("android.view.View"));
+                    installedtext.waitForExists(1000);
+                }
     }
     
     //Execute the Work 2.0 Performance Benchmark - wait up to ten minutes for this to complete
@@ -109,10 +130,18 @@ public class UiAutomation extends BaseUiAutomation {
                                                .className("android.view.View")
                                                .childSelector(new UiSelector().index(1)
                                                .className("android.view.View")));
-        run.click();
+        if (run.exists()) {
+            run.click();
+        } else {
+            UiObject runtext = 
+               mDevice.findObject(new UiSelector().text("RUN"));
+            runtext.click();
+        }
         UiObject score = 
-            mDevice.findObject(new UiSelector().descriptionContains("Work 2.0 performance score")
-                .className("android.view.View"));
-        score.waitForExists(600000);
+            mDevice.findObject(new UiSelector().text("SCORE DETAILS")
+                .className("android.widget.TextView"));
+        if (!score.waitForExists(3600000)){
+            throw new UiObjectNotFoundException("Workload has not completed within the given time");
+        }
     }
 }

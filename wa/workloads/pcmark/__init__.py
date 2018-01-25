@@ -41,6 +41,7 @@ class PcMark(ApkUiautoWorkload):
     def __init__(self, target, **kwargs):
         super(PcMark, self).__init__(target, **kwargs)
         self.clean_assets = True
+        self.gui.timeout = 3600
 
     def init_resources(self, context):
         super(PcMark, self).init_resources(context)

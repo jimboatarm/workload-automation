@@ -1,0 +1,14 @@
+{
+    "artifacts": [
+        {
+            "path": "logcat.log", 
+            "kind": "log", 
+            "description": null, 
+            "name": "logcat", 
+            "classifiers": {}
+        }
+    ], 
+    "metrics": [], 
+    "status": "OK", 
+    "events": []
+}

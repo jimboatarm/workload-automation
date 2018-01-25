@@ -1,0 +1,21 @@
+#Internal package file, do not edit.
+#Wed Jan 24 16:24:59 GMT 2018
+2.base=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/mergeJavaRes/debug/jars/2/1f/main.jar
+5.file=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/dex/debug/folders/1000/1f/main/classes.dex
+5.set=DEX
+3.base=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/mergeJavaRes/debug/jars/2/1f/main.jar
+2.set=JAVA_RESOURCE
+4.base=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/mergeJavaRes/debug/jars/2/1f/main.jar
+count=6
+0.file=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/res/resources-debug.ap_/AndroidManifest.xml
+5.base=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/dex/debug/folders/1000/1f/main
+4.set=JAVA_RESOURCE
+1.file=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/res/resources-debug.ap_/resources.arsc
+1.set=ANDROID_RESOURCE
+2.file=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/mergeJavaRes/debug/jars/2/1f/main.jar/LICENSE-junit.txt
+0.base=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/res/resources-debug.ap_
+3.file=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/mergeJavaRes/debug/jars/2/1f/main.jar/junit/runner/logo.gif
+3.set=JAVA_RESOURCE
+1.base=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/res/resources-debug.ap_
+4.file=/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/transforms/mergeJavaRes/debug/jars/2/1f/main.jar/junit/runner/smalllogo.gif
+0.set=ANDROID_RESOURCE

@@ -1,0 +1,50 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:2:1-12:12
+	package
+		ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:3:5-39
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+	android:versionName
+		ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:5:5-30
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+	android:versionCode
+		ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:4:5-28
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:2:11-69
+instrumentation
+ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:8:5-10:51
+	android:targetPackage
+		ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:10:9-49
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+	android:name
+		ADDED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml:9:9-70
+uses-sdk
+INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
+MERGED from [com.android.support.test:rules:0.5] /home/scott/.android/build-cache/7e0e90c43296b30ee971cf1736150dff6e8db0e1/output/AndroidManifest.xml:5:5-7:41
+MERGED from [com.android.support.test:runner:0.5] /home/scott/.android/build-cache/49f30defd2ce11ca7d171d46fd8ac545ca69923f/output/AndroidManifest.xml:20:5-22:41
+MERGED from [com.android.support.test:exposed-instrumentation-api-publish:0.5] /home/scott/.android/build-cache/8b8305e6fded558bfdcd8e54716cd0e48d8972be/output/AndroidManifest.xml:20:5-22:41
+MERGED from [com.android.support.test.uiautomator:uiautomator-v18:2.1.2] /home/scott/.android/build-cache/416f9a3b6b90d8a61e31cf35e81618e6c34c363a/output/AndroidManifest.xml:20:5-44
+MERGED from [:uiauto:] /home/scott/.android/build-cache/c61db8e73b29f2495b542e28da683364cfc6e4b8/output/AndroidManifest.xml:5:5-7:41
+	android:targetSdkVersion
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+		INJECTED from /home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/src/main/AndroidManifest.xml
+application
+ADDED from [com.android.support.test:runner:0.5] /home/scott/.android/build-cache/49f30defd2ce11ca7d171d46fd8ac545ca69923f/output/AndroidManifest.xml:24:5-20
+MERGED from [com.android.support.test:exposed-instrumentation-api-publish:0.5] /home/scott/.android/build-cache/8b8305e6fded558bfdcd8e54716cd0e48d8972be/output/AndroidManifest.xml:24:5-20
+MERGED from [com.android.support.test.uiautomator:uiautomator-v18:2.1.2] /home/scott/.android/build-cache/416f9a3b6b90d8a61e31cf35e81618e6c34c363a/output/AndroidManifest.xml:22:5-20
+MERGED from [:uiauto:] /home/scott/.android/build-cache/c61db8e73b29f2495b542e28da683364cfc6e4b8/output/AndroidManifest.xml:11:5-13:19
+uses-permission#android.permission.READ_LOGS
+ADDED from [:uiauto:] /home/scott/.android/build-cache/c61db8e73b29f2495b542e28da683364cfc6e4b8/output/AndroidManifest.xml:9:5-68
+	android:name
+		ADDED from [:uiauto:] /home/scott/.android/build-cache/c61db8e73b29f2495b542e28da683364cfc6e4b8/output/AndroidManifest.xml:9:22-65
+uses-library#android.test.runner
+ADDED from [:uiauto:] /home/scott/.android/build-cache/c61db8e73b29f2495b542e28da683364cfc6e4b8/output/AndroidManifest.xml:12:9-60
+	android:name
+		ADDED from [:uiauto:] /home/scott/.android/build-cache/c61db8e73b29f2495b542e28da683364cfc6e4b8/output/AndroidManifest.xml:12:23-57

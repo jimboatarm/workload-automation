@@ -1,0 +1,44 @@
+{
+    "run_config": {
+        "reboot_policy": "as_needed", 
+        "device_config": {
+            "shell_prompt": "REGEX:8:^.*(shell|root)@.*:/\\S* [#$] ", 
+            "package_data_directory": "/data/data", 
+            "core_names": null, 
+            "modules": null, 
+            "big_core": null, 
+            "core_clusters": null, 
+            "working_directory": null, 
+            "executables_directory": null, 
+            "device": null, 
+            "adb_server": null, 
+            "model": null, 
+            "load_default_modules": false
+        }, 
+        "execution_order": "by_iteration", 
+        "output_processors": [
+            "status", 
+            "csv"
+        ], 
+        "max_retries": 2, 
+        "retry_on_status": [
+            "LEVEL:FAILED:9", 
+            "LEVEL:PARTIAL:8"
+        ], 
+        "bail_on_init_failure": true, 
+        "device": "generic_android", 
+        "allow_phone_home": true
+    }, 
+    "settings": {
+        "default_output_directory": "wa_output", 
+        "verbosity": 0, 
+        "user_directory": "/home/scott/.workload_automation", 
+        "logging": {
+            "color": true, 
+            "verbose_format": "%(asctime)s %(levelname)-8s %(name)s: %(message)s", 
+            "regular_format": "%(levelname)-8s %(message)s", 
+            "file_format": "%(asctime)s %(levelname)-8s %(name)s: %(message)s"
+        }, 
+        "assets_repository": null
+    }
+}

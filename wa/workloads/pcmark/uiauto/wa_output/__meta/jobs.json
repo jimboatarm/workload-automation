@@ -1,0 +1,28 @@
+{
+    "jobs": [
+        {
+            "runtime_parameters": {}, 
+            "workload_name": "pcmark", 
+            "augmentations": [], 
+            "flash": null, 
+            "classifiers": null, 
+            "label": "pcmark", 
+            "iterations": 1, 
+            "id": "wk1", 
+            "boot_parameters": null, 
+            "workload_parameters": {
+                "name": "pcmark", 
+                "package_name": null, 
+                "variant": null, 
+                "markers_enabled": false, 
+                "strict": false, 
+                "version": null, 
+                "force_install": false, 
+                "cleanup_assets": true, 
+                "uninstall": false, 
+                "install_timeout": 300, 
+                "exact_abi": false
+            }
+        }
+    ]
+}

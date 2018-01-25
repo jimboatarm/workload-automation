@@ -1,0 +1,5 @@
+remote_assets_url: "https://raw.githubusercontent.com/ARM-software/workload-automation-assets/master/dependencies"
+device: generic_android
+device_config:
+    load_default_modules: False
+

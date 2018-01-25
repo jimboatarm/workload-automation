@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="false"
+        jar="/home/scott/.android/build-cache/c61db8e73b29f2495b542e28da683364cfc6e4b8/output/jars/classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.3"
+        sha1="96b2337610b1c85444b5e89e3e7965ee26797ee9">
+        <dex dex="/home/scott/workspace/workload-automation/wa/workloads/pcmark/uiauto/app/build/intermediates/pre-dexed/debug/classes_19044b73a727937810b1683cd7a83d89ce857177.jar" />
+    </item>
+
+</items>

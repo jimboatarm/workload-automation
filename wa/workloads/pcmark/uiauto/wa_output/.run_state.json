@@ -1,0 +1,14 @@
+{
+    "status": "OK", 
+    "timestamp": "DATET:2018-01-24T16:41:55.097467", 
+    "jobs": [
+        {
+            "status": "OK", 
+            "retries": 0, 
+            "timestamp": "DATET:2018-01-24T16:50:37.856101", 
+            "iteration": 1, 
+            "label": "pcmark", 
+            "id": "wk1"
+        }
+    ]
+}
