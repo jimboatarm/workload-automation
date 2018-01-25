@@ -38,6 +38,7 @@ class speedometer(UiautoWorkload):
     def __init__(self, target, **kwargs):
         super(speedometer, self).__init__(target, **kwargs)
         self.clean_assets = True
+        self.gui.timeout = 1500
 
     def init_resources(self, context):
         super(speedometer, self).init_resources(context)

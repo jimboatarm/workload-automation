@@ -48,6 +48,7 @@ public class UiAutomation extends BaseUiAutomation {
     private int networkTimeoutSecs = 30;
     private long networkTimeout =  TimeUnit.SECONDS.toMillis(networkTimeoutSecs);
     public static String TAG = "UXPERF";
+    public boolean textenabled = false;
 
     @Before
     public void initialize(){
@@ -89,11 +90,21 @@ public class UiAutomation extends BaseUiAutomation {
         UiObject start = 
             mDevice.findObject(new UiSelector().description("Start Test")
                 .className("android.widget.Button"));
-        start.click();
+            if (start.exists()){
+                start.click();
+            } else {
+            UiObject starttext = 
+                mDevice.findObject(new UiSelector().text("Start Test")
+                    .className("android.widget.Button"));
+                starttext.click();
+            }
         UiObject scores = 
             mDevice.findObject(new UiSelector().resourceId("result-number")
                 .className("android.view.View"));
-        scores.waitForExists(300000);
+        scores.waitForExists(2100000);
+        String textScore = scores.getText();
+        Log.d(TAG, "Speedometer Score " + textScore);
         Log.d(TAG, "Speedometer Score " + scores.getContentDescription());
     }
 }
+
