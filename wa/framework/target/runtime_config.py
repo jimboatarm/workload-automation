@@ -118,7 +118,7 @@ class HotplugRuntimeConfig(RuntimeConfig):
         self._runtime_params[param_name] = \
                 RuntimeParameter(param_name, kind=int,
                                  constraint=lambda x:
-                                         0 < x <= self.target.number_of_cpus,
+                                         0 <= x <= self.target.number_of_cpus,
                                  description="""
                                  The number of cpu cores to be online
                                  """,
@@ -130,7 +130,7 @@ class HotplugRuntimeConfig(RuntimeConfig):
             self._runtime_params[param_name] = \
                     RuntimeParameter(param_name, kind=int,
                                      constraint=lambda x, name=name:
-                                             0 < x <= len(self.target.core_cpus(name)),
+                                             0 <= x <= len(self.target.core_cpus(name)),
                                      description="""
                                      The number of {} cores to be online
                                      """.format(name),
@@ -153,7 +153,7 @@ class HotplugRuntimeConfig(RuntimeConfig):
                 self._runtime_params[param_name] = \
                         RuntimeParameter(param_name, kind=int,
                                          constraint=lambda x, cluster=cluster:
-                                                   0 < x <= len(resolve_cpus(cluster), self.target),
+                                                   0 <= x <= len(resolve_cpus(cluster, self.target)),
                                          description="""
                                          The number of cores on the {} cluster to be online
                                          """.format(cluster),
@@ -516,10 +516,6 @@ class CpufreqRuntimeConfig(RuntimeConfig):
     def validate_parameters(self):
         '''Method to validate parameters against each other'''
         for cpu in self.config:
-            if cpu not in self.target.list_online_cpus():
-                msg = 'Cannot configure frequencies for {} as no CPUs are online.'
-                raise TargetError(msg.format(cpu))
-
             config = self.config[cpu]
             minf = config.get('min_frequency')
             maxf = config.get('max_frequency')
@@ -848,7 +844,9 @@ class AndroidRuntimeConfig(RuntimeConfig):
         super(AndroidRuntimeConfig, self).__init__(target)
 
     def initialize(self):
-        if self.target.os != 'android':
+        if self.target.os not in ['android', 'chromeos']:
+            return
+        if self.target.os == 'chromeos' and not self.target.supports_android:
             return
 
         param_name = 'brightness'
@@ -861,33 +859,39 @@ class AndroidRuntimeConfig(RuntimeConfig):
                               Specify the screen brightness to be set for
                               the device
                               """)
-        param_name = 'airplane_mode'
-        self._runtime_params[param_name] = \
-            RuntimeParameter(param_name, kind=bool,
-                              setter=self.set_airplane_mode,
-                              description="""
-                              Specify whether airplane mode should be
-                              enabled for the device
-                              """)
-        param_name = 'rotation'
-        self._runtime_params[param_name] = \
-            RuntimeParameter(param_name, kind=ScreenOrientation,
-                              setter=self.set_rotation,
-                              description="""
-                              Specify the screen orientation for the device
-                              """)
-        param_name = 'screen_on'
-        self._runtime_params[param_name] = \
-            RuntimeParameter(param_name, kind=bool,
-                              default=True,
-                              setter=self.set_screen_state,
-                              description="""
-                              Specify whether the device screen should be on
-                              """)
+
+        if self.target.os is 'android':
+            param_name = 'airplane_mode'
+            self._runtime_params[param_name] = \
+                RuntimeParameter(param_name, kind=bool,
+                                  setter=self.set_airplane_mode,
+                                  description="""
+                                  Specify whether airplane mode should be
+                                  enabled for the device
+                                  """)
+
+            param_name = 'rotation'
+            self._runtime_params[param_name] = \
+                RuntimeParameter(param_name, kind=ScreenOrientation,
+                                  setter=self.set_rotation,
+                                  description="""
+                                  Specify the screen orientation for the device
+                                  """)
+
+            param_name = 'screen_on'
+            self._runtime_params[param_name] = \
+                RuntimeParameter(param_name, kind=bool,
+                                  default=True,
+                                  setter=self.set_screen_state,
+                                  description="""
+                                  Specify whether the device screen should be on
+                                  """)
 
     def check_target(self):
-        if self.target.os != 'android':
+        if self.target.os != 'android' and self.target.os != 'chromeos':
             raise ConfigError('Target does not appear to be running Android')
+        if self.target.os == 'chromeos' and not self.target.supports_android:
+            raise ConfigError('Target does not appear to support Android')
 
     def validate_parameters(self):
         pass
