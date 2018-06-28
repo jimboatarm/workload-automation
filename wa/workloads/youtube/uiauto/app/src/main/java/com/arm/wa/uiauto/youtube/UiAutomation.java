@@ -25,6 +25,7 @@ import android.support.test.uiautomator.UiSelector;
 
 import com.arm.wa.uiauto.BaseUiAutomation;
 import com.arm.wa.uiauto.ActionLogger;
+import com.arm.wa.uiauto.PmuLogger;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,10 +50,25 @@ public class UiAutomation extends BaseUiAutomation {
     protected Bundle parameters;
     protected String packageID;
 
+
+    protected String pmuTag;
+    protected PmuLogger pmulogger;
+    protected PmuLogger pmulogger_w;
+
+    protected boolean pmu_roi_enabled;
+    protected boolean pmu_run_enabled;
+
     @Before
     public void initialize() {
         parameters = getParams();
         packageID = getPackageID(parameters);
+
+        pmu_run_enabled = parameters.getBoolean("pmu_run_enabled");
+        pmu_roi_enabled = parameters.getBoolean("pmu_roi_enabled");
+
+        if (pmu_run_enabled) {
+            pmu_roi_enabled = false;
+        }
     }
 
     @Test
@@ -63,6 +79,9 @@ public class UiAutomation extends BaseUiAutomation {
 
     @Test
     public void runWorkload() throws Exception {
+        pmuTag = "run_workload";
+        pmulogger_w = new PmuLogger(pmuTag, parameters, pmu_run_enabled);
+        pmulogger_w.start();
         String videoSource = parameters.getString("video_source");
         String searchTerm = parameters.getString("search_term");
         testPlayVideo(videoSource, searchTerm);
@@ -71,6 +90,7 @@ public class UiAutomation extends BaseUiAutomation {
         pausePlayVideo();
         checkVideoInfo();
         scrollRelated();
+        pmulogger_w.stop();
     }
 
     @Test
@@ -122,7 +142,7 @@ public class UiAutomation extends BaseUiAutomation {
     }
 
     public void disableAutoplay() throws Exception {
-        UiObject moreoptions = 
+        UiObject moreoptions =
             mDevice.findObject(new UiSelector().descriptionContains("More options"));
         if (moreoptions.exists()) {
             moreoptions.click();

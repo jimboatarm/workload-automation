@@ -26,6 +26,7 @@ import android.support.test.uiautomator.UiScrollable;
 import android.view.KeyEvent;
 
 import com.arm.wa.uiauto.BaseUiAutomation;
+import com.arm.wa.uiauto.PmuLogger;
 // import com.arm.wa.uiauto.UxPerfUiAutomation;
 
 import org.junit.Before;
@@ -48,6 +49,13 @@ public class UiAutomation extends BaseUiAutomation {
     Boolean isCorporate;
     Integer loops;
 
+    protected String pmuTag;
+    protected PmuLogger pmulogger;
+    protected PmuLogger pmulogger_w;
+
+    protected boolean pmu_run_enabled;
+    protected boolean pmu_roi_enabled;
+
     @Before
     public void initialize() {
         params = getParams();
@@ -56,6 +64,14 @@ public class UiAutomation extends BaseUiAutomation {
         minorVersion = Integer.parseInt(version[1]);
         isCorporate = params.getBoolean("is_corporate");
         loops = params.getInt("loops");
+
+        pmu_run_enabled = params.getBoolean("pmu_run_enabled");
+        pmu_roi_enabled = params.getBoolean("pmu_roi_enabled");
+
+        if (pmu_run_enabled) {
+            pmu_roi_enabled = false;
+        }
+
     }
 
     @Test
@@ -70,6 +86,9 @@ public class UiAutomation extends BaseUiAutomation {
     @Test
     @Override
     public void runWorkload() throws Exception {
+        pmuTag = "geekbench_run_workload";
+        pmulogger_w = new PmuLogger(pmuTag, params, pmu_run_enabled);
+        pmulogger_w.start();
         for (int i = 0; i < loops; i++) {
             switch (majorVersion) {
                 case 2:
@@ -107,7 +126,7 @@ public class UiAutomation extends BaseUiAutomation {
                     mDevice.pressBack();  // twice
             }
         }
-
+    pmulogger_w.stop();
         Bundle status = new Bundle();
         mInstrumentation.sendStatus(Activity.RESULT_OK, status);
     }

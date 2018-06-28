@@ -27,6 +27,7 @@ import com.arm.wa.uiauto.UxPerfUiAutomation.GestureTestParams;
 import com.arm.wa.uiauto.UxPerfUiAutomation.GestureType;
 import com.arm.wa.uiauto.BaseUiAutomation;
 import com.arm.wa.uiauto.ActionLogger;
+import com.arm.wa.uiauto.PmuLogger;
 import com.arm.wa.uiauto.UiAutoUtils;
 
 
@@ -37,12 +38,15 @@ import org.junit.runner.RunWith;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.*;
+import java.io.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.arm.wa.uiauto.BaseUiAutomation.FindByCriteria.BY_DESC;
 import static com.arm.wa.uiauto.BaseUiAutomation.FindByCriteria.BY_ID;
 import static com.arm.wa.uiauto.BaseUiAutomation.FindByCriteria.BY_TEXT;
 
+import android.util.Log;
 
 @RunWith(AndroidJUnit4.class)
 public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface {
@@ -55,13 +59,25 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
     protected String filename;
     protected String[] searchStrings;
 
+    protected String pmuTag;
+    protected PmuLogger pmulogger;
+    protected PmuLogger pmulogger_w;
 
+    protected boolean pmu_roi_enabled;
+    protected boolean pmu_run_enabled;
     @Before
     public void initialize(){
         parameters = getParams();
         packageID = getPackageID(parameters);
         filename = parameters.getString("filename");
         searchStrings = parameters.getStringArray("search_string_list");
+
+        pmu_roi_enabled = parameters.getBoolean("pmu_roi_enabled");
+        pmu_run_enabled = parameters.getBoolean("pmu_run_enabled");
+
+        if (pmu_run_enabled) { // Deactivate ROI markers if Run capture is enabled.
+            pmu_roi_enabled = false;
+        }
     }
 
     @Test
@@ -71,10 +87,14 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
 
     @Test
     public void runWorkload() throws Exception {
+        pmuTag = "run_workload";
+        pmulogger_w = new PmuLogger(pmuTag, parameters, pmu_run_enabled);
+	pmulogger_w.start();
         openFile(filename);
         gesturesTest();
         searchPdfTest(searchStrings);
         exitDocument();
+	pmulogger_w.stop();
     }
 
     @Test
@@ -151,8 +171,14 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
         String testTag = "open_document";
         ActionLogger logger = new ActionLogger(testTag, parameters);
 
+        pmuTag = "openFile_click_text";
+        pmulogger = new PmuLogger(pmuTag, parameters, pmu_roi_enabled);
+
         // Select the local files list from the My Documents view
+	pmulogger.start();
         clickUiObject(BY_TEXT, "LOCAL", "android.widget.TextView");
+	pmulogger.stop();
+
         UiObject directoryPath =
                 mDevice.findObject(new UiSelector().resourceId(packageID + "directoryPath"));
         if (!directoryPath.waitForExists(TimeUnit.SECONDS.toMillis(60))) {
@@ -165,11 +191,26 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
         if (!searchButton.waitForExists(TimeUnit.SECONDS.toMillis(10))) {
             throw new UiObjectNotFoundException("Could not find search button");
         }
+
+        pmuTag = "openFile_click_search";
+        pmulogger = new PmuLogger(pmuTag, parameters, pmu_roi_enabled);
+	pmulogger.start();
         searchButton.click();
+	pmulogger.stop();
+
         // Force a refresh of files before searching
+        pmuTag = "openFile_swipe1";
+        pmulogger = new PmuLogger(pmuTag, parameters, pmu_roi_enabled);
+	pmulogger.start();
         uiDeviceSwipe(Direction.DOWN, 100);
+	pmulogger.stop();
+
         // Repeat as first swipe is sometimes ignored.
+        pmuTag = "openFile_swipe2";
+        pmulogger = new PmuLogger(pmuTag, parameters, pmu_roi_enabled);
+	pmulogger.start();
         uiDeviceSwipe(Direction.DOWN, 100);
+	pmulogger.stop();
 
         // Enter search text into the file searchBox.  This will automatically filter the list.
         UiObject searchBox =
@@ -228,7 +269,12 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
 
             String runName = String.format(testTag + "_" + pair.getKey());
             ActionLogger logger = new ActionLogger(runName, parameters);
+
+            pmuTag = "gesTuresTest_" + runName;
+            pmulogger = new PmuLogger(pmuTag, parameters, pmu_roi_enabled);
+
             logger.start();
+	    pmulogger.start();
 
             switch (type) {
                 case UIDEVICE_SWIPE:
@@ -244,6 +290,7 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
                     break;
             }
 
+	    pmulogger.stop();
             logger.stop();
         }
     }

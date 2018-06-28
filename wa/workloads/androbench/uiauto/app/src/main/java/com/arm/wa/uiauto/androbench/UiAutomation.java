@@ -27,6 +27,7 @@ import android.view.KeyEvent;
 import android.util.Log;
 
 import com.arm.wa.uiauto.BaseUiAutomation;
+import com.arm.wa.uiauto.PmuLogger;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,9 +41,34 @@ public class UiAutomation extends BaseUiAutomation {
 
     public static String TAG = "UXPERF";
 
+    public Bundle parameters;
+
+    protected String pmuTag;
+    protected PmuLogger pmulogger;
+    protected PmuLogger pmulogger_w;
+
+    protected boolean pmu_run_enabled;
+    protected boolean pmu_roi_enabled;
+
+    @Before
+    public void initialize(){
+    	parameters = getParams();
+
+        pmu_run_enabled = parameters.getBoolean("pmu_run_enabled");
+        pmu_roi_enabled = parameters.getBoolean("pmu_roi_enabled");
+
+        if (pmu_run_enabled) {
+            pmu_roi_enabled = false;
+        }
+    }
+
     @Test
     public void runWorkload() throws Exception {
+        pmuTag = "androbench_run_workload";
+        pmulogger_w = new PmuLogger(pmuTag, parameters, pmu_run_enabled);
+        pmulogger_w.start();
         runBenchmark();
+        pmulogger_w.stop();
     }
 
     @Test
@@ -74,19 +100,19 @@ public class UiAutomation extends BaseUiAutomation {
 
     public void getScores() throws Exception {
         UiSelector selector = new UiSelector();
-        UiObject seqRead = 
+        UiObject seqRead =
             mDevice.findObject(selector.text("Sequential Read").fromParent(selector.index(1)));
-        UiObject seqWrite = 
+        UiObject seqWrite =
             mDevice.findObject(selector.text("Sequential Write").fromParent(selector.index(1)));
-        UiObject ranRead = 
+        UiObject ranRead =
             mDevice.findObject(selector.text("Random Read").fromParent(selector.index(1)));
-        UiObject ranWrite = 
+        UiObject ranWrite =
             mDevice.findObject(selector.text("Random Write").fromParent(selector.index(1)));
-        UiObject sqlInsert = 
+        UiObject sqlInsert =
             mDevice.findObject(selector.text("SQLite Insert").fromParent(selector.index(1)));
-        UiObject sqlUpdate = 
+        UiObject sqlUpdate =
             mDevice.findObject(selector.text("SQLite Update").fromParent(selector.index(1)));
-        UiObject sqlDelete = 
+        UiObject sqlDelete =
             mDevice.findObject(selector.text("SQLite Delete").fromParent(selector.index(1)));
         Log.d(TAG, "Sequential Read Score " + seqRead.getText());
         Log.d(TAG, "Sequential Write Score " + seqWrite.getText());

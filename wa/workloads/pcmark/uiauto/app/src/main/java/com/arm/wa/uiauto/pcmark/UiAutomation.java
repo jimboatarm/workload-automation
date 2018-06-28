@@ -23,6 +23,7 @@ import android.support.test.uiautomator.UiSelector;
 
 import com.arm.wa.uiauto.BaseUiAutomation;
 import com.arm.wa.uiauto.ActionLogger;
+import com.arm.wa.uiauto.PmuLogger;
 import android.util.Log;
 
 import org.junit.Before;
@@ -38,9 +39,27 @@ public class UiAutomation extends BaseUiAutomation {
     private long networkTimeout =  TimeUnit.SECONDS.toMillis(networkTimeoutSecs);
     public static String TAG = "UXPERF";
 
+    public Bundle parameters;
+
+    protected String pmuTag;
+    protected PmuLogger pmulogger;
+    protected PmuLogger pmulogger_w;
+
+    protected boolean pmu_run_enabled;
+    protected boolean pmu_roi_enabled;
+
+
     @Before
     public void initialize(){
+        parameters = getParams();
         initialize_instrumentation();
+
+        pmu_run_enabled = parameters.getBoolean("pmu_run_enabled");
+        pmu_roi_enabled = parameters.getBoolean("pmu_roi_enabled");
+
+        if (pmu_run_enabled) {
+            pmu_roi_enabled = false;
+        }
     }
 
     @Test
@@ -52,7 +71,11 @@ public class UiAutomation extends BaseUiAutomation {
 
     @Test
     public void runWorkload() throws Exception {
+        pmuTag = "run_workload";
+        pmulogger_w = new PmuLogger(pmuTag, parameters, pmu_run_enabled);
+        pmulogger_w.start();
         runBenchmark();
+        pmulogger_w.stop();
     }
 
     @Test
@@ -62,7 +85,7 @@ public class UiAutomation extends BaseUiAutomation {
 
     //Swipe to benchmarks and back to initialise the app correctly
     private void loadBenchmarks() throws Exception {
-        UiObject title = 
+        UiObject title =
             mDevice.findObject(new UiSelector().text("PCMARK"));
         title.waitForExists(300000);
         if (title.exists()){
@@ -81,22 +104,22 @@ public class UiAutomation extends BaseUiAutomation {
 
     //Install the Work 2.0 Performance Benchmark
     private void installBenchmark() throws Exception {
-        UiObject benchmark = 
+        UiObject benchmark =
             mDevice.findObject(new UiSelector().descriptionContains("INSTALL("));
         if (benchmark.exists()) {
             benchmark.click();
         } else {
-            UiObject benchmarktext = 
+            UiObject benchmarktext =
                 mDevice.findObject(new UiSelector().textContains("INSTALL("));
             benchmarktext.click();
         }
-            UiObject install = 
+            UiObject install =
                 mDevice.findObject(new UiSelector().description("INSTALL")
                     .className("android.view.View"));
             if (install.exists()) {
                 install.click();
             } else {
-                UiObject installtext = 
+                UiObject installtext =
                     mDevice.findObject(new UiSelector().text("INSTALL")
                         .className("android.view.View"));
                 installtext.click();;
@@ -112,7 +135,7 @@ public class UiAutomation extends BaseUiAutomation {
                     installedtext.waitForExists(1000);
                 }
     }
-    
+
     //Execute the Work 2.0 Performance Benchmark - wait up to ten minutes for this to complete
     private void runBenchmark() throws Exception {
         UiObject run =
@@ -123,17 +146,17 @@ public class UiAutomation extends BaseUiAutomation {
         if (run.exists()) {
             run.click();
         } else {
-            UiObject runtext = 
+            UiObject runtext =
                 mDevice.findObject(new UiSelector().text("RUN"));
                 if (runtext.exists()) {
                     runtext.click();
                 } else {
-                    UiObject rundesc = 
+                    UiObject rundesc =
                         mDevice.findObject(new UiSelector().description("RUN"));
                     rundesc.click();
                 }
         }
-        UiObject score = 
+        UiObject score =
             mDevice.findObject(new UiSelector().text("SCORE DETAILS")
                 .className("android.widget.TextView"));
         if (!score.waitForExists(3600000)){

@@ -30,6 +30,7 @@ import com.arm.wa.uiauto.UxPerfUiAutomation.GestureType;
 import com.arm.wa.uiauto.BaseUiAutomation;
 import com.arm.wa.uiauto.ApplaunchInterface;
 import com.arm.wa.uiauto.ActionLogger;
+import com.arm.wa.uiauto.PmuLogger;
 import com.arm.wa.uiauto.UiAutoUtils;
 
 import org.junit.Before;
@@ -62,6 +63,13 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
     protected String searchWord;
     protected String noteText;
 
+    protected String pmuTag;
+    protected PmuLogger pmulogger;
+    protected PmuLogger pmulogger_w;
+
+    protected boolean pmu_roi_enabled;
+    protected boolean pmu_run_enabled;
+
     @Before
     public void initialize() {
         this.uiAutoTimeout = TimeUnit.SECONDS.toMillis(8);
@@ -74,6 +82,13 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
         chapterPageNumber = parameters.getInt("chapter_page_number");
         searchWord = parameters.getString("search_word");
         noteText = "This is a test note";
+
+        pmu_roi_enabled = parameters.getBoolean("pmu_roi_enabled");
+        pmu_run_enabled = parameters.getBoolean("pmu_run_enabled");
+
+        if (pmu_run_enabled) {
+            pmu_roi_enabled =  false;
+        }
     }
 
     @Test
@@ -91,6 +106,9 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
     }
     @Test
     public void runWorkload() throws Exception {
+        pmuTag = "run_workload";
+        pmulogger_w = new PmuLogger(pmuTag, parameters, pmu_run_enabled);
+        pmulogger_w.start();
         openBook(libraryBookTitle);
         selectChapter(chapterPageNumber);
         gesturesTest();
@@ -100,6 +118,7 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
         switchPageStyles();
         aboutBook();
         pressBack();
+        pmulogger_w.stop();
     }
 
     @Test
@@ -696,7 +715,7 @@ public class UiAutomation extends BaseUiAutomation implements ApplaunchInterface
     }
 
     private void dismissNightLight() throws Exception {
-        UiObject night = 
+        UiObject night =
             mDevice.findObject(new UiSelector().text("Night Light makes reading easy"));
         if (night.exists()) {
             clickUiObject(BY_TEXT, "DISMISS");
