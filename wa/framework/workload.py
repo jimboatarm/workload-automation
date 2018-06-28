@@ -171,10 +171,6 @@ class ApkWorkload(Workload):
     package_names = []
     view = None
 
-    # Set this to True to mark that this workload requires the target apk to be run
-    # for initialisation purposes before the main run is performed.
-    requires_rerun = False
-
     parameters = [
         Parameter('package_name', kind=str,
                   description="""
@@ -265,17 +261,7 @@ class ApkWorkload(Workload):
     def setup(self, context):
         super(ApkWorkload, self).setup(context)
         self.apk.setup(context)
-        if self.requires_rerun:
-            self.setup_rerun()
-            self.apk.restart_activity()
         time.sleep(self.loading_time)
-
-    def setup_rerun(self):
-        """
-        Perform the setup necessary to rerun the workload. Only called if
-        ``requires_rerun`` is set.
-        """
-        pass
 
     def teardown(self, context):
         super(ApkWorkload, self).teardown(context)
@@ -337,6 +323,41 @@ class ApkUiautoWorkload(ApkUIWorkload):
                   measurements or statistics for specific parts of the workload
                   execution.
                   """),
+        Parameter('pmu_run_enabled', kind=bool, default=False,
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  for pmu data capture for entire workload run using perf tool.
+                  """),
+        Parameter('pmu_roi_enabled', kind=bool, default=False,
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  for pmu data capture between regions of interests. As roi comes
+                  within the workload, if both markers are enabled, roi markers are
+                  disabled.
+                  """),
+        Parameter('pmu_cluster', kind=str, default='cpu-bigLITTLE',
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  at various points during execution. These markes may be used
+                  by other plugins or post-processing scripts to provide
+                  measurments or statistics for specific parts of the workload
+                  execution.
+                  """),
+        Parameter('pmu_counter', kind=str, default='r8,r11',
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  at various points during execution. These markes may be used
+                  by other plugins or post-processing scripts to provide
+                  measurments or statistics for specific parts of the workload
+                  execution.
+                  """),
+        Parameter('pmu_capture_type', kind=str, default='stat',
+                  description="""
+                  If set to `stat`, we can get raw counters running perf stat.
+                  Output of perf stat is obtained as a text file.
+                  If set to `record`, we can get detailed capture running perf record.
+                  Output of perf record is obtained as a .data file.
+                  """),
     ]
 
     def __init__(self, target, **kwargs):
@@ -346,6 +367,15 @@ class ApkUiautoWorkload(ApkUIWorkload):
     def setup(self, context):
         self.gui.uiauto_params['package_name'] = self.apk.apk_info.package
         self.gui.uiauto_params['markers_enabled'] = self.markers_enabled
+        self.gui.uiauto_params['pmu_run_enabled'] = self.pmu_run_enabled
+        self.gui.uiauto_params['pmu_roi_enabled'] = self.pmu_roi_enabled
+        self.gui.uiauto_params['pmu_iteration'] = str(context.current_job.iteration)
+        self.gui.uiauto_params['pmu_cluster'] = self.pmu_cluster
+        self.gui.uiauto_params['pmu_counter'] = self.pmu_counter
+        self.gui.uiauto_params['pmu_capture_type'] = self.pmu_capture_type
+        timestamp = time.strftime("%d%m%Y%H%M%S")
+        pmu_res_dir = "{}/pmu_data/{}/{}/{}".format(self.target.working_directory, self.name, self.target.model, timestamp)
+        self.gui.uiauto_params['pmu_res_dir'] = pmu_res_dir
         self.gui.init_commands()
         super(ApkUiautoWorkload, self).setup(context)
 
@@ -418,6 +448,41 @@ class UiautoWorkload(UIWorkload):
                   measurements or statistics for specific parts of the workload
                   execution.
                   """),
+        Parameter('pmu_run_enabled', kind=bool, default=False,
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  for pmu data capture for entire workload run using perf tool.
+                  """),
+        Parameter('pmu_roi_enabled', kind=bool, default=False,
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  for pmu data capture between regions of interests. As roi comes
+                  within the workload, if both markers are enabled, roi markers are
+                  disabled.
+                  """),
+        Parameter('pmu_cluster', kind=str, default='cpu-bigLITTLE',
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  at various points during execution. These markes may be used
+                  by other plugins or post-processing scripts to provide
+                  measurments or statistics for specific parts of the workload
+                  execution.
+                  """),
+        Parameter('pmu_counter', kind=str, default='r8,r11',
+                  description="""
+                  If set to ``True``, workloads will insert markers into logs
+                  at various points during execution. These markes may be used
+                  by other plugins or post-processing scripts to provide
+                  measurments or statistics for specific parts of the workload
+                  execution.
+                  """),
+        Parameter('pmu_capture_type', kind=str, default='stat',
+                  description="""
+                  If set to `stat`, we can get raw counters running perf stat.
+                  Output of perf stat is obtained as a text file.
+                  If set to `record`, we can get detailed capture running perf record.
+                  Output of perf record is obtained as a .data file.
+                  """),
     ]
 
     def __init__(self, target, **kwargs):
@@ -432,6 +497,15 @@ class UiautoWorkload(UIWorkload):
 
     def setup(self, context):
         self.gui.uiauto_params['markers_enabled'] = self.markers_enabled
+        self.gui.uiauto_params['pmu_run_workload_enabled'] = self.pmu_run_workload_enabled
+        self.gui.uiauto_params['pmu_run_enabled'] = self.pmu_run_enabled
+        self.gui.uiauto_params['pmu_roi_enabled'] = self.pmu_roi_enabled
+        self.gui.uiauto_params['pmu_cluster'] = self.pmu_cluster
+        self.gui.uiauto_params['pmu_counter'] = self.pmu_counter
+        self.gui.uiauto_params['pmu_capture_type'] = self.pmu_capture_type
+        timestamp = time.strftime("%d%m%Y%H%M%S")
+        pmu_res_dir = "{}/pmu_data/{}/{}/{}".format(self.target.working_directory, self.name, self.target.model, timestamp)
+        self.gui.uiauto_params['pmu_res_dir'] = pmu_res_dir
         self.gui.init_commands()
         super(UiautoWorkload, self).setup(context)
 
@@ -799,10 +873,6 @@ class PackageHandler(object):
             self.target.execute('am force-stop {}'.format(self.apk_info.package))
             raise WorkloadError(output)
         self.logger.debug(output)
-
-    def restart_activity(self):
-        self.target.execute('am force-stop {}'.format(self.apk_info.package))
-        self.start_activity()
 
     def reset(self, context):  # pylint: disable=W0613
         self.target.execute('am force-stop {}'.format(self.apk_info.package))
