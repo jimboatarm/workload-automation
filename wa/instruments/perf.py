@@ -23,6 +23,9 @@ from devlib.trace.perf import PerfCollector
 
 from wa import Instrument, Parameter
 from wa.utils.types import list_or_string, list_of_strs, numeric
+from wa.utils.android import LogcatParser
+from wa.utils.perf import SimpleperfReportSampleParser
+from wa.utils.perf import SimpleperfReportSample
 
 PERF_COUNT_REGEX = re.compile(r'^(CPU\d+)?\s*(\d+)\s*(.*?)\s*(\[\s*\d+\.\d+%\s*\])?\s*$')
 
@@ -33,42 +36,30 @@ class PerfInstrument(Instrument):
     description = """
     Perf is a Linux profiling with performance counters.
     Simpleperf is an Android profiling tool with performance counters.
-
     It is highly recomended to use perf_type = simpleperf when using this instrument
     on android devices since it recognises android symbols in record mode and is much more stable
     when reporting record .data files. For more information see simpleperf documentation at:
     https://android.googlesource.com/platform/system/extras/+/master/simpleperf/doc/README.md
-
     Performance counters are CPU hardware registers that count hardware events
     such as instructions executed, cache-misses suffered, or branches
     mispredicted. They form a basis for profiling applications to trace dynamic
     control flow and identify hotspots.
-
     perf accepts options and events. If no option is given the default '-a' is
     used. For events, the default events for perf are migrations and cs. The default
     events for simpleperf are raw-cpu-cycles, raw-l1-dcache, raw-l1-dcache-refill, raw-instructions-retired.
     They both can be specified in the config file.
-
     Events must be provided as a list that contains them and they will look like
     this ::
-
         (for perf_type = perf ) perf_events = ['migrations', 'cs']
         (for perf_type = simpleperf) perf_events = ['raw-cpu-cycles', 'raw-l1-dcache']
-
-
     Events can be obtained by typing the following in the command line on the
     device ::
-
         perf list
         simpleperf list
-
     Whereas options, they can be provided as a single string as following ::
-
         perf_options = '-a -i'
         perf_options = '--app com.adobe.reader'
-
     Options can be obtained by running the following in the command line ::
-
         man perf-stat
     """
 
@@ -261,31 +252,37 @@ class PerfInstrument(Instrument):
         for host_file in os.listdir(outdir):
             label, ext = os.path.splitext(host_file)
             context.add_artifact(label, os.path.join(outdir, host_file), 'raw')
-            if ext != '.rpt':
-                continue
-            column_headers = []
-            column_header_indeces = []
-            event_type = ''
-            with open(os.path.join(outdir, host_file)) as fh:
-                for line in fh:
-                    words = line.split()
-                    if not words:
-                        continue
-                    if words[0] == 'Event:':
-                        event_type = words[1]
-                    column_headers = self._get_report_column_headers(column_headers,
-                                                                     words,
-                                                                     'simpleperf')
-                    for column_header in column_headers:
-                        column_header_indeces.append(line.find(column_header))
-                    self._add_report_metric(column_headers,
-                                            column_header_indeces,
-                                            line,
-                                            words,
-                                            context,
-                                            event_type,
-                                            label)
+            if ext == '.rpt':
+                self._process_simpleperf_report_file(context, outdir, host_file, label)
+            if ext == '.rptsamples':
+                self._process_simpleperf_report_samples_file(context, outdir, host_file, label)
+            
 
+    def _process_simpleperf_report_file(self, context, outdir, host_file, label):
+        column_headers = []
+        column_header_indeces = []
+        event_type = ''
+        with open(os.path.join(outdir, host_file)) as fh:
+            for line in fh:
+                words = line.split()
+                if not words:
+                    continue
+                if words[0] == 'Event:':
+                    event_type = words[1]
+                if words[0] == 'Samples:':
+                    number_of_samples = numeric(words[1])
+                if words[0] == 'Event' and words[1] == 'count:':
+                    number_of_events = numeric(words[2])
+                    context.add_metric('pmu_event_count',
+                                        number_of_events,
+                                        'count',
+                                        classifiers={'label':label, 'samples_count' : number_of_samples, 'event': event_type})
+                column_headers = self._get_report_column_headers(column_headers,
+                                                                 words,
+                                                                 'simpleperf')
+                for column_header in column_headers:
+                    column_header_indeces.append(line.find(column_header))
+                
     @staticmethod
     def _get_report_column_headers(column_headers, words, perf_type):
         if 'Overhead' not in words:
@@ -301,14 +298,47 @@ class PerfInstrument(Instrument):
         return column_headers
 
     @staticmethod
-    def _add_report_metric(column_headers, column_header_indeces, line, words, context, event_type, label):
-        if '%' not in words[0]:
+    def _process_simpleperf_report_samples_file(context, outdir, host_file, label):
+        logcat_path = os.path.join(context.output_directory, 'logcat.log')
+        if not os.path.exists(logcat_path):
             return
-        classifiers = {}
-        for i in range(1, len(column_headers)):
-            classifiers[column_headers[i]] = line[column_header_indeces[i]:column_header_indeces[i + 1]].strip()
-
-        context.add_metric('{}_{}_Overhead'.format(label, event_type),
-                           numeric(words[0].strip('%')),
-                           'percent',
-                           classifiers=classifiers)
+        parser = LogcatParser()
+        subtests = []
+        subtest = {}
+        for entry in parser.parse(logcat_path):
+            if not entry.tag == 'UX_PERF':
+                continue
+            sub_test_name, state, timestamp = entry.message.split()
+            if state == 'start':
+                subtest['subtest'] = sub_test_name
+                subtest['start'] = timestamp
+            if state == 'end':
+                subtest['end'] = timestamp
+                subtests.append(dict(subtest))
+                subtest.clear()
+        if not subtests: # No subtests found
+            return
+        perf_parser = SimpleperfReportSampleParser()
+        samples = perf_parser.parse(os.path.join(outdir, host_file))
+        meta_info = perf_parser.parse_meta_info(os.path.join(outdir, host_file))
+        last_sample_index = 0
+        for subtest in subtests:
+            subtest_events_count = {}
+            subtest_sample_count = {}
+            for event in meta_info.event_types:
+                subtest_events_count[event] = 0
+                subtest_sample_count[event] = 0
+            for i in range(last_sample_index, len(samples)):
+                if samples[i].time < subtest['start']:
+                    continue
+                if samples[i].time > subtest['end']:
+                    for event in meta_info.event_types:
+                        context.add_metric('{}_{}'.format(subtest['subtest'], 'pmu_event_count'),
+                                                          subtest_events_count[event],
+                                                          'count',
+                                                          classifiers={'label':label, 'samples_count': subtest_sample_count[event], 'event': event})
+                    last_sample_index = i
+                    break
+                if samples[i].time >= subtest['start'] and samples[i].time <= subtest['end']:
+                    subtest_events_count[samples[i].event_type] += int(samples[i].event_count)
+                    subtest_sample_count[samples[i].event_type] += 1 
