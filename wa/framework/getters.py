@@ -23,9 +23,11 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 import sys
 
 import requests
+import zipfile
 
 
 from wa import Parameter, settings, __file__ as _base_filepath
@@ -378,3 +380,74 @@ class Filer(ResourceGetter):
         self.logger.debug('cp {} {}'.format(result, local_full_path))
         shutil.copy(result, local_full_path)
         return result
+
+class S3(ResourceGetter):
+
+    name = 's3'
+    description = '''
+    For internal use.
+
+    Downloads files from s3.
+
+    Given a remote_s3_path, this will attempt to download <remote_s3_path>/asset_name.
+
+    If downloaded asset is a zip file, asset is unzipped by getter. 
+    
+    '''
+
+    parameters = [
+        Parameter('remote_path', global_alias='remote_s3_path', default='',
+                  description="""
+                  Base path to remote files
+                  """),
+        Parameter('always_fetch', kind=boolean, default=False,
+                  global_alias='always_fetch_remote_assets',
+                  description="""
+                  If ``True``, will always attempt to fetch assets from the
+                  remote, even if a local cached copy is available.
+                  """),
+    ]
+
+    def register(self, resolver):
+        resolver.register(self.get, SourcePriority.remote)
+
+    def get(self, resource):
+        if resource.kind != 'file':
+            return None
+        remote_path = os.path.join(self.remote_path, resource.path)
+        local_path = os.path.join(settings.dependencies_directory, resource.owner.dependencies_directory)
+        if not self.always_fetch:
+            if '.zip' in resource.path:
+                resource.path = resource.path.strip('.zip')
+            result = get_from_location(local_path, resource)
+            if result:
+                return result
+        s3_result = subprocess.check_output('s3cmd ls {}'.format(remote_path), shell=True).decode()
+        print(s3_result)
+        if not s3_result or s3_result == '':
+            return None
+        asset_path = s3_result.split()[3]
+        result = self._download_s3_resource(asset_path, resource)
+        if result:
+            return result
+        return None
+
+    def _download_s3_resource(self, remote_path, resource):
+        local_target_dir = os.path.basename(os.path.normpath(remote_path))
+        local_path = os.path.join(settings.dependencies_directory, resource.owner.dependencies_directory, local_target_dir)
+        self.logger.info('Downloading {} from s3'.format(remote_path))
+        download_result = subprocess.check_output('s3cmd get --recursive {} {}'.format(remote_path, local_path), shell=True).decode()
+        if not '100%' in download_result:
+            self.logger.warning('Resource {} did not download correctly'.format(remote_path))
+            return None
+        if '.zip' in local_path:
+            self.logger.info('Unzipping {}'.format(local_path))
+            with zipfile.ZipFile(local_path,"r") as zip_ref:
+                zip_ref.extractall(local_path.strip('.zip'))
+            # Remove zip file
+            os.remove(local_path)
+            if os.path.exists(local_path.strip('.zip')):
+                return local_path.strip('.zip')
+        if os.path.exists(local_path):
+            return local_path
+        return None
