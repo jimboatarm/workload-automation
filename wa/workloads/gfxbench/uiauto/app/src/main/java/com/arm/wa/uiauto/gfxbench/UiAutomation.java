@@ -42,6 +42,7 @@ public class UiAutomation extends BaseUiAutomation {
     public static String TAG = "UXPERF";
     protected Bundle parameters;
     protected String[] testList;
+    public static String pkg = "com.glbenchmark.glbenchmark27";
 
     @Before
     public void initialize(){
@@ -56,7 +57,7 @@ public class UiAutomation extends BaseUiAutomation {
 
         //Calculate the location of the test selection button
         UiObject circle =
-            mDevice.findObject(new UiSelector().resourceId("net.kishonti.gfxbench.gl.v50000.corporate:id/main_circleControl")
+            mDevice.findObject(new UiSelector().resourceId(pkg + ":id/main_circleControl")
             .className("android.widget.RelativeLayout"));
         Rect bounds = circle.getBounds();
         int selectx = bounds.width()/4;
@@ -119,7 +120,7 @@ public class UiAutomation extends BaseUiAutomation {
         }
 
         UiObject home =
-            mDevice.findObject(new UiSelector().resourceId("net.kishonti.gfxbench.gl.v50000.corporate:id/main_homeBack")
+            mDevice.findObject(new UiSelector().resourceId(pkg + ":id/main_homeBack")
                 .className("android.widget.LinearLayout"));
             home.waitForExists(300000);
     }
@@ -132,7 +133,7 @@ public class UiAutomation extends BaseUiAutomation {
 
         //Wait for results
         UiObject complete =
-            mDevice.findObject(new UiSelector().resourceId("net.kishonti.gfxbench.gl.v50000.corporate:id/results_testList"));
+            mDevice.findObject(new UiSelector().resourceId(pkg + ":id/results_testList"));
         complete.waitForExists(1200000);
 
         UiObject outOfmemory = mDevice.findObject(new UiSelector().text("OUT_OF_MEMORY"));
@@ -145,7 +146,7 @@ public class UiAutomation extends BaseUiAutomation {
         UiScrollable list = new UiScrollable(new UiSelector().scrollable(true));
 
         UiObject results =
-            mDevice.findObject(new UiSelector().resourceId("net.kishonti.gfxbench.gl.v50000.corporate:id/results_testList"));
+            mDevice.findObject(new UiSelector().resourceId(pkg + ":id/results_testList"));
 
         for (String test : testList) {
             getTestScore(list, results, test);
@@ -170,12 +171,12 @@ public class UiAutomation extends BaseUiAutomation {
         }
         for (int i=1; i < resultsList.getChildCount(); i++) {
             UiObject testname = resultsList.getChild(new UiSelector().index(i))
-                .getChild(new UiSelector().resourceId("net.kishonti.gfxbench.gl.v50000.corporate:id/updated_result_item_name"));
+                .getChild(new UiSelector().resourceId(pkg + ":id/updated_result_item_name"));
             if (testname.exists() && testname.getText().equals(test)) {
                 UiObject result = resultsList.getChild(new UiSelector()
                                     .index(i))
                                     .getChild(new UiSelector()
-                                    .resourceId("net.kishonti.gfxbench.gl.v50000.corporate:id/updated_result_item_subresult"));
+                                    .resourceId(pkg + ":id/updated_result_item_subresult"));
                 Log.d(TAG, test + " score " + result.getText());
                 return;
             }

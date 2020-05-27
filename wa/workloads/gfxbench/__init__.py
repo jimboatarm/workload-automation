@@ -20,8 +20,8 @@ from wa.utils.types import list_or_string
 
 class Gfxbench(ApkUiautoWorkload):
 
-    name = 'gfxbench-corporate'
-    package_names = ['net.kishonti.gfxbench.gl.v50000.corporate']
+    name = 'gfxbench'
+    package_names = ['com.glbenchmark.glbenchmark27']
     clear_data_on_reset = False
     score_regex = re.compile(r'.*?([\d.]+).*')
     description = '''
