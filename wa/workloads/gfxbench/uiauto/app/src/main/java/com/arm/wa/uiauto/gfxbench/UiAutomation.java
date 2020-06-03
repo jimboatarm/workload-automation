@@ -1,4 +1,4 @@
-/*    Copyright 2014-2016 ARM Limited
+/*    Copyright 2014-2020 ARM Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,10 +65,6 @@ public class UiAutomation extends BaseUiAutomation {
         selectx = bounds.centerX() + selectx;
         int selecty = bounds.height()/4;
         selecty = bounds.centerY() + selecty;
-
-        Log.d(TAG, "maxx " + selectx);
-        Log.d(TAG, "maxy " + selecty);
-
         mDevice.click(selectx,selecty);
 
         // Disable test categories
