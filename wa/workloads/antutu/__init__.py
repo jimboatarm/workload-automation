@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import re
-
-from wa import ApkUiautoWorkload, WorkloadError, Parameter
+import re, os
+from wa.utils.exec_control import once
+from wa import ApkUiautoWorkload, WorkloadError, Parameter, ApkFile
 
 
 class Antutu(ApkUiautoWorkload):
@@ -58,7 +58,7 @@ class Antutu(ApkUiautoWorkload):
     Known working APK version: 8.0.4
     '''
 
-    supported_versions = ['7.0.4', '7.2.0', '8.0.4', '8.1.9']
+    supported_versions = ['7.0.4', '7.2.0', '8.0.4', '8.1.9', '8.4.5']
 
     parameters = [
         Parameter('version', kind=str, allowed_values=supported_versions, override=True,
@@ -68,6 +68,13 @@ class Antutu(ApkUiautoWorkload):
                       ''')
                   )
     ]
+
+    @once
+    def initialize(self, context):
+        resource = ApkFile(self, package='com.antutu.benchmark.full') 
+        host_apk = context.get_resource(resource)
+        self.target.install_apk(host_apk, replace=True)
+        super(Antutu, self).initialize(context)
 
     def setup(self, context):
         self.gui.uiauto_params['version'] = self.version
