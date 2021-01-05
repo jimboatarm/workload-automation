@@ -26,7 +26,7 @@ import android.support.test.uiautomator.UiScrollable;
 import android.view.KeyEvent;
 
 import com.arm.wa.uiauto.BaseUiAutomation;
-// import com.arm.wa.uiauto.UxPerfUiAutomation;
+import com.arm.wa.uiauto.UxPerfUiAutomation;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -143,11 +143,19 @@ public class UiAutomation extends BaseUiAutomation {
                                          : "com.primatelabs.geekbench";
 
         UiObject runButton =
-	    mDevice.findObject(new UiSelector().resourceIdMatches(packageName + ":id/runCpuBenchmarks"));
+            mDevice.findObject(new UiSelector().resourceIdMatches(packageName + ":id/runCpuBenchmarks"));
         if (!runButton.waitForExists(WAIT_TIMEOUT_5SEC)) {
+            String packageGB5 = "com.primatelabs.geekbench5";
+            UiObject runGB5 =
+                mDevice.findObject(new UiSelector().resourceIdMatches(packageGB5 + ":id/runCpuBenchmarks"));
+        if (runButton.waitForExists(WAIT_TIMEOUT_5SEC)) {
+            runButton.click();
+        } else if (runGB5.waitForExists(WAIT_TIMEOUT_5SEC)) {
+            runGB5.click();
+        } else {
             throw new UiObjectNotFoundException("Could not find Run button");
         }
-        runButton.click();
+        }
     }
 
     public void waitForResultsv2() throws Exception {
