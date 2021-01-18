@@ -21,7 +21,7 @@ from wa.utils.types import list_or_string
 class Gfxbench(ApkUiautoWorkload):
 
     name = 'gfxbench-corporate'
-    package_names = ['net.kishonti.gfxbench.gl.v50000.corporate']
+    package_names = ['net.kishonti.gfxbench.vulkan.v50000.corporate']
     clear_data_on_reset = False
     regex_template = 'name: \((?P<test_name>.*)\).*result: \((?P<result>.*)?\).* sub_result:.*\((?P<sub_result>.*?)?\).*'
     description = '''
@@ -57,6 +57,7 @@ class Gfxbench(ApkUiautoWorkload):
         super(Gfxbench, self).__init__(target, **kwargs)
         self.gui.timeout = self.timeout
         self.gui.uiauto_params['tests'] = self.tests
+        self.install_timeout = self.timeout
 
     # pylint: disable=too-many-locals
     def update_output(self, context):
